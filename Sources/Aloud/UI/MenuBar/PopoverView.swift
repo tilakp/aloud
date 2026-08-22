@@ -12,7 +12,7 @@ struct PopoverView: View {
                 NowPlayingView(audioPlayer: coordinator.audioPlayer, onOpenSettings: { showSettings = true })
             }
         }
-        .padding(14)
-        .frame(width: 292)
+        .padding(16)
+        .frame(width: 324)
     }
 }

@@ -15,7 +15,7 @@ final class StatusItemController: NSObject, NSWindowDelegate {
     private let activeFrames = StatusIconRenderer.activeFrames()
     private weak var coordinator: AppCoordinator?
 
-    private let popupSize = NSSize(width: 292, height: 320)
+    private let popupSize = NSSize(width: 324, height: 360)
 
     init(coordinator: AppCoordinator) {
         self.coordinator = coordinator

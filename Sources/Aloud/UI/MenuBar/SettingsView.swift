@@ -43,7 +43,7 @@ struct SettingsView: View {
                 }
                 .padding(.trailing, 4)
             }
-            .frame(height: 150)
+            .frame(height: 178)
 
             Divider()
 

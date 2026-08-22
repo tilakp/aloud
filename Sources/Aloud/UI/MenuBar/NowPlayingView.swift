@@ -45,13 +45,16 @@ struct NowPlayingView: View {
                 } else if coordinator.currentChunkText.isEmpty {
                     Text("Select text anywhere, then press \(hotkeyLabel).")
                         .foregroundStyle(.secondary)
+                } else if !audioPlayer.currentWords.isEmpty {
+                    highlightedCaption
+                        .lineLimit(5)
                 } else {
                     Text(coordinator.currentChunkText)
                         .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                        .lineLimit(5)
                 }
             }
-            .font(.system(size: 12.5))
+            .font(.system(size: 13))
             .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 10) {
@@ -80,5 +83,22 @@ struct NowPlayingView: View {
 
     private var voiceDisplayName: String {
         Voices.byID(coordinator.currentVoice)?.name ?? coordinator.currentVoice
+    }
+
+    /// Builds one `Text` out of every word in the current chunk, styling
+    /// the word at `activeWordIndex` distinctly — SwiftUI's `Text`
+    /// concatenation (`+`) preserves per-segment font/color/weight, which
+    /// is enough to read clearly as "this word, right now" without needing
+    /// a custom wrapping layout just for a highlight background.
+    private var highlightedCaption: Text {
+        audioPlayer.currentWords.enumerated().reduce(Text("")) { result, entry in
+            let (index, word) = entry
+            let isActive = index == audioPlayer.activeWordIndex
+            var segment = Text(word.text + word.trailingWhitespace)
+            segment = isActive
+                ? segment.foregroundColor(Color.accentColor).fontWeight(.bold)
+                : segment.foregroundColor(.secondary)
+            return result + segment
+        }
     }
 }

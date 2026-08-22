@@ -148,9 +148,9 @@ final class AppCoordinator: ObservableObject {
                 if Task.isCancelled { return }
                 currentChunkText = chunk
                 do {
-                    let samples = try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
+                    let (samples, words) = try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
                     if Task.isCancelled { return }
-                    try audioPlayer.enqueue(samples: samples, sampleRate: KokoroEngine.sampleRate)
+                    try audioPlayer.enqueue(samples: samples, words: words, sampleRate: KokoroEngine.sampleRate)
                 } catch {
                     // Skip a chunk that fails rather than aborting the whole read.
                     continue
