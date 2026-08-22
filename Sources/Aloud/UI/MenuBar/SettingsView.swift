@@ -95,7 +95,26 @@ struct SettingsView: View {
             }
             .padding(.trailing, 4)
         }
+        // Persistent scrollbar rather than the default auto-hiding one —
+        // without some standing cue, a card that happens to end mid-list
+        // reads as complete rather than scrollable.
+        .scrollIndicators(.visible)
         .frame(height: 172)
+        .overlay(alignment: .bottom) {
+            // A fade into the card's own background color at the cut
+            // edge — the clearest signal that content continues below,
+            // independent of whether the scrollbar catches your eye.
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .controlBackgroundColor).opacity(0),
+                    Color(nsColor: .controlBackgroundColor),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 16)
+            .allowsHitTesting(false)
+        }
         .cardBackground()
     }
 }
