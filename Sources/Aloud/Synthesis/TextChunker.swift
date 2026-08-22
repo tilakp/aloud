@@ -53,8 +53,39 @@ enum TextChunker {
             } else {
                 current = candidate
             }
+            // A single piece can itself exceed the cap — e.g. a long
+            // run-on sentence with no commas/semicolons/dashes anywhere.
+            // Without this, `current` would just carry the whole oversized
+            // piece straight through, silently violating the cap this
+            // function exists to enforce.
+            while current.count > maxCharactersPerChunk {
+                result.append(contentsOf: splitByWhitespace(current))
+                current = ""
+            }
         }
         if !current.isEmpty { result.append(current) }
         return result.isEmpty ? [sentence] : result
+    }
+
+    /// Last-resort split for a single piece with no punctuation to break
+    /// on: chunk at the last space before the cap, or hard-cut mid-word if
+    /// there's no space within range at all, so this always terminates.
+    private static func splitByWhitespace(_ text: String) -> [String] {
+        var remaining = Substring(text.trimmingCharacters(in: .whitespaces))
+        var result: [String] = []
+        while remaining.count > maxCharactersPerChunk {
+            let splitIndex = remaining.index(remaining.startIndex, offsetBy: maxCharactersPerChunk)
+            var breakIndex = remaining[..<splitIndex].lastIndex(of: " ") ?? splitIndex
+            // Guarantees forward progress even in a degenerate case (e.g.
+            // a leading space) that would otherwise leave breakIndex at
+            // the very start and loop forever.
+            if breakIndex <= remaining.startIndex { breakIndex = splitIndex }
+
+            let piece = remaining[..<breakIndex].trimmingCharacters(in: .whitespaces)
+            if !piece.isEmpty { result.append(piece) }
+            remaining = Substring(remaining[breakIndex...].trimmingCharacters(in: .whitespaces))
+        }
+        if !remaining.isEmpty { result.append(String(remaining)) }
+        return result
     }
 }

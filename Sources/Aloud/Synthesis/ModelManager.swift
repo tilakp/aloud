@@ -16,6 +16,7 @@ final class ModelManager: ObservableObject {
     @Published private(set) var state: State = .notInstalled
 
     private let fileManager = FileManager.default
+    private var isEnsuring = false
 
     private lazy var modelsDirectory: URL = {
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -33,11 +34,23 @@ final class ModelManager: ObservableObject {
         }
     }
 
+    /// Checks existence *and* expected file size — cheap enough to run on
+    /// every launch, and catches a truncated/corrupted file that a plain
+    /// existence check would trust forever (the SHA-256 check only ever
+    /// runs once, at initial download time).
     func isInstalledOnDisk() -> Bool {
-        fileManager.fileExists(atPath: modelFileURL.path) && fileManager.fileExists(atPath: voicesFileURL.path)
+        fileSize(at: modelFileURL) == ModelAsset.modelSize && fileSize(at: voicesFileURL) == ModelAsset.voicesSize
+    }
+
+    private func fileSize(at url: URL) -> Int64? {
+        (try? fileManager.attributesOfItem(atPath: url.path))?[.size] as? Int64
     }
 
     func ensureInstalled() async {
+        guard !isEnsuring else { return }
+        isEnsuring = true
+        defer { isEnsuring = false }
+
         if isInstalledOnDisk() {
             state = .installed
             return
@@ -80,8 +93,13 @@ final class ModelManager: ObservableObject {
         let tempURL = try await downloader.download(from: url)
 
         state = .verifying(label: label)
-        let data = try Data(contentsOf: tempURL)
-        let digestHex = SHA256.hash(data: data).compactMap { String(format: "%02x", $0) }.joined()
+        // Reading ~327MB and hashing it is real work — do it off the main
+        // actor so the "Verifying…" spinner (and the rest of the UI) stays
+        // responsive instead of freezing for the duration.
+        let digestHex = try await Task.detached(priority: .utility) {
+            let data = try Data(contentsOf: tempURL)
+            return SHA256.hash(data: data).compactMap { String(format: "%02x", $0) }.joined()
+        }.value
         guard digestHex == expectedSHA256 else {
             try? fileManager.removeItem(at: tempURL)
             throw ModelError.checksumMismatch

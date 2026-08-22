@@ -10,6 +10,8 @@ final class AudioPlayer: ObservableObject {
     private let playerNode = AVAudioPlayerNode()
     private var format: AVAudioFormat?
     private var scheduledCount = 0
+    private var pendingBuffers = 0
+    private var isScheduleComplete = false
     private var onAllChunksFinished: (() -> Void)?
 
     enum PlayerError: LocalizedError {
@@ -27,10 +29,16 @@ final class AudioPlayer: ObservableObject {
         self.totalChunks = totalChunks
         currentChunkIndex = 0
         scheduledCount = 0
+        pendingBuffers = 0
+        isScheduleComplete = false
         onAllChunksFinished = onFinished
     }
 
     func enqueue(samples: [Float], sampleRate: Double) throws {
+        // A chunk that synthesizes to zero frames (e.g. punctuation-only
+        // text) would otherwise force-unwrap a nil baseAddress below.
+        guard !samples.isEmpty else { return }
+
         let format = self.format ?? AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
         self.format = format
 
@@ -48,15 +56,14 @@ final class AudioPlayer: ObservableObject {
         }
 
         scheduledCount += 1
+        pendingBuffers += 1
         let chunkNumber = scheduledCount
         playerNode.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
             Task { @MainActor in
                 guard let self else { return }
                 self.currentChunkIndex = chunkNumber
-                if chunkNumber >= self.totalChunks {
-                    self.isPlaying = false
-                    self.onAllChunksFinished?()
-                }
+                self.pendingBuffers -= 1
+                self.checkFinished()
             }
         }
 
@@ -64,6 +71,23 @@ final class AudioPlayer: ObservableObject {
             playerNode.play()
             isPlaying = true
         }
+    }
+
+    /// Call once the synthesis loop has finished attempting every chunk —
+    /// whether all of them enqueued successfully or some were skipped.
+    /// Without this, a skipped chunk left completion permanently
+    /// unreachable: it was gated on `scheduledCount >= totalChunks`, but a
+    /// skipped chunk never advances `scheduledCount`, which is only
+    /// incremented for chunks that actually enqueue.
+    func finishSchedule() {
+        isScheduleComplete = true
+        checkFinished()
+    }
+
+    private func checkFinished() {
+        guard isScheduleComplete, pendingBuffers == 0 else { return }
+        isPlaying = false
+        onAllChunksFinished?()
     }
 
     func pause() {
@@ -82,5 +106,7 @@ final class AudioPlayer: ObservableObject {
         engine.stop()
         isPlaying = false
         scheduledCount = 0
+        pendingBuffers = 0
+        isScheduleComplete = false
     }
 }

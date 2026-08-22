@@ -25,8 +25,6 @@ targets:
     platform: macOS
     sources:
       - path: Sources/Aloud
-    resources:
-      - path: Resources
     dependencies:
       - package: KokoroSwift
         product: KokoroSwift

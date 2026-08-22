@@ -14,19 +14,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             presentOnboarding()
         }
-
-        // Debug hook: `ALOUD_DEBUG_TEST_READ=1 open Aloud.app --args` isn't
-        // enough to pass env vars through `open`, so this is launched via
-        // the binary directly with the env var set. Lets the pipeline be
-        // exercised and inspected (DebugAudioDump) without a manual click.
-        if ProcessInfo.processInfo.environment["ALOUD_DEBUG_TEST_READ"] != nil {
-            Task {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                coordinator.readText(
-                    "The quarterly numbers came in well ahead of forecast, and margins held steady despite the added freight cost."
-                )
-            }
-        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

@@ -14,6 +14,7 @@
 		317B5C842B1DCD5BD03209F9 /* KokoroEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32637DF61C065C877797B6B9 /* KokoroEngine.swift */; };
 		34739A70A30F4A89596E603C /* MLXUtilsLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 1C2A1F626D9C1B932D150949 /* MLXUtilsLibrary */; };
 		350482E3D05C3321B99CE897 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = C4ECC4F3D5B6DFB2B06E9190 /* KeyboardShortcuts */; };
+		44A2D2941AF76CAFA20B4DF6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D9E3B54583AAEAFCA43B0B32 /* Assets.xcassets */; };
 		4FCD51F4E466B6238B34FAFE /* StatusIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1A21D816965DFE3E9557B7 /* StatusIconRenderer.swift */; };
 		504AA7B11190CC5EE8C80019 /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980021F02B4A5A9D0AA0A2AB /* PopoverView.swift */; };
 		50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB636872AB6E1BEDBF02686 /* OnboardingView.swift */; };
@@ -30,7 +31,6 @@
 		C36F1A5A22FABAF3198E57FA /* Voices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAD333DD8D22C891FD82F20 /* Voices.swift */; };
 		C76F1953457BC8720F9B3D90 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEA8E30A7C60C17EAF0C9124 /* main.swift */; };
 		D09FB55FF1895256DA07393C /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B6E85B2E215103006D87CC /* PermissionsManager.swift */; };
-		D3EE2D7AAB14699656EDECF3 /* DebugAudioDump.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDED29FF7590170A7459369B /* DebugAudioDump.swift */; };
 		E2CED29616D71FC5F2503AB5 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD310C0AA3D97770B28D1205 /* HotkeyManager.swift */; };
 		E3F099207A7265D8EC0D053A /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635FC3128CA8E9E800099887 /* SettingsStore.swift */; };
 		ED7C1CFD787A348D70C3A639 /* ModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6022C2831C4E7FA07FE46896 /* ModelManager.swift */; };
@@ -71,8 +71,8 @@
 		CD310C0AA3D97770B28D1205 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		CE631FF0A8448553C061BA1D /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		D91CC48C104D2C193D3E31B2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		D9E3B54583AAEAFCA43B0B32 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DEA8E30A7C60C17EAF0C9124 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		EDED29FF7590170A7459369B /* DebugAudioDump.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugAudioDump.swift; sourceTree = "<group>"; };
 		F773EED1D54230017F1F9619 /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
 		F9F163B4C6A66048AA83B441 /* Aloud.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aloud.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -95,6 +95,7 @@
 		027CF80EB8414AED138D7C7B /* Aloud */ = {
 			isa = PBXGroup;
 			children = (
+				D9E3B54583AAEAFCA43B0B32 /* Assets.xcassets */,
 				61578A7563224FF0E33813EE /* Info.plist */,
 				F462AA8DC231D4A5338CDE6A /* App */,
 				ED9AD4B46D677952F1357A82 /* Capture */,
@@ -146,7 +147,6 @@
 		75E28C5B1B6E2A71B758C987 /* Synthesis */ = {
 			isa = PBXGroup;
 			children = (
-				EDED29FF7590170A7459369B /* DebugAudioDump.swift */,
 				56B0BD69C310FEC38D7979E3 /* FileDownloader.swift */,
 				32637DF61C065C877797B6B9 /* KokoroEngine.swift */,
 				8E0C33C7D244ABCFCCC77444 /* ModelAsset.swift */,
@@ -218,6 +218,7 @@
 			buildConfigurationList = 26E7B14190F650624A97E1BB /* Build configuration list for PBXNativeTarget "Aloud" */;
 			buildPhases = (
 				EB57D8AD9BF86A1181EA5623 /* Sources */,
+				C6506615DEAC548E1E7AA506 /* Resources */,
 				F916B3A4C07F517AEDA128C3 /* Frameworks */,
 				F40055D9E76AB1DD613D1817 /* Embed Frameworks */,
 			);
@@ -276,6 +277,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		C6506615DEAC548E1E7AA506 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				44A2D2941AF76CAFA20B4DF6 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		EB57D8AD9BF86A1181EA5623 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -284,7 +296,6 @@
 				29F89D49D5D6D7EDEB1EAC9D /* AppCoordinator.swift in Sources */,
 				9EB504D4AC89EE1114F36E20 /* AppDelegate.swift in Sources */,
 				B07175C7C7350D728767CDD3 /* AudioPlayer.swift in Sources */,
-				D3EE2D7AAB14699656EDECF3 /* DebugAudioDump.swift in Sources */,
 				123F5668B85837B3CD463D3B /* FileDownloader.swift in Sources */,
 				E2CED29616D71FC5F2503AB5 /* HotkeyManager.swift in Sources */,
 				317B5C842B1DCD5BD03209F9 /* KokoroEngine.swift in Sources */,

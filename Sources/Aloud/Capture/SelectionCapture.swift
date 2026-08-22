@@ -65,10 +65,7 @@ enum SelectionCapture {
     private static func readViaSimulatedCopy() async throws -> String? {
         let pasteboard = NSPasteboard.general
         let previousChangeCount = pasteboard.changeCount
-        let previousItems: [(String, Data)] = pasteboard.pasteboardItems?.compactMap { item in
-            guard let type = item.types.first, let data = item.data(forType: type) else { return nil }
-            return (type.rawValue, data)
-        } ?? []
+        let previousSnapshot = snapshotPasteboard(pasteboard)
 
         simulateCopyKeystroke()
 
@@ -82,18 +79,38 @@ enum SelectionCapture {
         }
         NSLog("[Aloud][capture] clipboard changeCount before=\(previousChangeCount) after=\(pasteboard.changeCount) gotString=\(result != nil)")
 
-        restorePasteboard(previousItems, on: pasteboard)
+        restorePasteboard(previousSnapshot, on: pasteboard)
         return result
     }
 
-    private static func restorePasteboard(_ items: [(String, Data)], on pasteboard: NSPasteboard) {
-        pasteboard.clearContents()
-        guard !items.isEmpty else { return }
-        let item = NSPasteboardItem()
-        for (type, data) in items {
-            item.setData(data, forType: NSPasteboard.PasteboardType(type))
+    /// Every representation of every item, not just one type off the first
+    /// item — a plain `.first` capture would silently degrade a multi-item
+    /// clipboard (e.g. several Finder files) or a multi-representation one
+    /// (e.g. rich text's RTF/HTML/plain-text trio) down to a single value
+    /// when restored.
+    private static func snapshotPasteboard(_ pasteboard: NSPasteboard) -> [[NSPasteboard.PasteboardType: Data]] {
+        (pasteboard.pasteboardItems ?? []).map { item in
+            var representations: [NSPasteboard.PasteboardType: Data] = [:]
+            for type in item.types {
+                if let data = item.data(forType: type) {
+                    representations[type] = data
+                }
+            }
+            return representations
         }
-        pasteboard.writeObjects([item])
+    }
+
+    private static func restorePasteboard(_ snapshot: [[NSPasteboard.PasteboardType: Data]], on pasteboard: NSPasteboard) {
+        pasteboard.clearContents()
+        guard !snapshot.isEmpty else { return }
+        let items = snapshot.map { representations -> NSPasteboardItem in
+            let item = NSPasteboardItem()
+            for (type, data) in representations {
+                item.setData(data, forType: type)
+            }
+            return item
+        }
+        pasteboard.writeObjects(items)
     }
 
     private static func simulateCopyKeystroke() {

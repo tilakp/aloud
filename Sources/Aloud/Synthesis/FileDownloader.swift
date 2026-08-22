@@ -34,6 +34,7 @@ final class FileDownloader: NSObject, URLSessionDownloadDelegate, @unchecked Sen
             continuation?.resume(throwing: error)
         }
         continuation = nil
+        session.finishTasksAndInvalidate()
     }
 
     func urlSession(
@@ -50,5 +51,6 @@ final class FileDownloader: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         guard let error else { return }
         continuation?.resume(throwing: error)
         continuation = nil
+        session.finishTasksAndInvalidate()
     }
 }

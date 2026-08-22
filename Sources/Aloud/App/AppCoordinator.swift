@@ -90,7 +90,7 @@ final class AppCoordinator: ObservableObject {
         currentChunkText = ""
         popupRequestID += 1
         let name = Voices.byID(voiceID)?.name ?? voiceID
-        startReading(text: "Hi, I'm \(name).", voice: voiceID, speed: 1.0)
+        startReading(text: "Hi, I'm \(name).", voice: voiceID, speed: 1.0, isPreview: true)
     }
 
     func togglePlayPause() {
@@ -108,7 +108,7 @@ final class AppCoordinator: ObservableObject {
         currentChunkText = ""
     }
 
-    private func startReading(text: String, voice: String, speed: Float) {
+    private func startReading(text: String, voice: String, speed: Float, isPreview: Bool = false) {
         synthesisTask?.cancel()
         audioPlayer.stop()
 
@@ -120,8 +120,15 @@ final class AppCoordinator: ObservableObject {
 
         currentVoice = voice
         audioPlayer.reset(totalChunks: chunks.count) { [weak self] in
-            self?.activityState = .idle
-            self?.currentChunkText = ""
+            guard let self else { return }
+            activityState = .idle
+            currentChunkText = ""
+            // A preview temporarily shows the previewed voice as "current"
+            // in the popover — revert to the real default once it's done,
+            // rather than leaving it looking like the default changed.
+            if isPreview {
+                currentVoice = settings.selectedVoice
+            }
         }
 
         let chunksToRead = chunks
@@ -143,13 +150,17 @@ final class AppCoordinator: ObservableObject {
                 do {
                     let samples = try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
                     if Task.isCancelled { return }
-                    DebugAudioDump.write(samples: samples, sampleRate: KokoroEngine.sampleRate)
                     try audioPlayer.enqueue(samples: samples, sampleRate: KokoroEngine.sampleRate)
                 } catch {
                     // Skip a chunk that fails rather than aborting the whole read.
                     continue
                 }
             }
+            // Whether every chunk enqueued successfully or some were
+            // skipped, the loop is done attempting them — let AudioPlayer
+            // know so it can detect completion even when fewer buffers
+            // were scheduled than the original chunk count.
+            audioPlayer.finishSchedule()
         }
     }
 }
