@@ -1,0 +1,59 @@
+name: Aloud
+options:
+  bundleIdPrefix: com.tilak
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+
+packages:
+  KokoroSwift:
+    url: https://github.com/mlalma/kokoro-ios.git
+    exactVersion: 1.0.11
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts.git
+    exactVersion: 1.10.0
+  MLXUtilsLibrary:
+    url: https://github.com/mlalma/MLXUtilsLibrary.git
+    exactVersion: 0.0.6
+  MLXSwift:
+    url: https://github.com/ml-explore/mlx-swift.git
+    exactVersion: 0.30.2
+
+targets:
+  Aloud:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/Aloud
+    resources:
+      - path: Resources
+    dependencies:
+      - package: KokoroSwift
+        product: KokoroSwift
+        embed: true
+      - package: KeyboardShortcuts
+        product: KeyboardShortcuts
+      - package: MLXUtilsLibrary
+        product: MLXUtilsLibrary
+      - package: MLXSwift
+        product: MLX
+    info:
+      path: Sources/Aloud/Info.plist
+      properties:
+        CFBundleName: Aloud
+        CFBundleDisplayName: Aloud
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSUIElement: true
+        LSMinimumSystemVersion: "15.0"
+        NSHumanReadableCopyright: ""
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tilak.Aloud
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
+        ENABLE_HARDENED_RUNTIME: true
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
