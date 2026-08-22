@@ -28,8 +28,8 @@ There's no dock icon, no main window — just a menu bar icon that pulses while 
 
 ## Install
 
-1. Download the latest `Aloud.dmg` from [Releases](../../releases/latest).
-2. Open the DMG and drag **Aloud** into **Applications**.
+1. Download the latest `.dmg` from [Releases](../../releases/latest).
+2. Open the disk image and drag **Aloud** into **Applications**.
 3. **First launch:** Aloud isn't notarized by Apple (no paid developer account behind this), so Gatekeeper will block it the first time. Right-click (or Control-click) `Aloud.app` in Applications and choose **Open**, then confirm **Open** in the dialog that appears. You only need to do this once.
 4. Aloud walks you through the rest on first launch: granting Accessibility access (needed to read your text selection from other apps) and downloading the voice model (~340MB, one-time).
 
