@@ -9,6 +9,18 @@ struct NowPlayingView: View {
     @ObservedObject private var settings = SettingsStore.shared
     var onOpenSettings: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// The play/pause button is a solid accent-filled circle; the icon on
+    /// top needs to flip between white and near-black depending on which
+    /// direction the accent color goes — dark mode's bright teal fill
+    /// measured ~1.8:1 contrast with a white icon (fails even the relaxed
+    /// 3:1 bar for icons), so light-on-dark-fill and dark-on-light-fill
+    /// each need their own icon color rather than a single fixed white.
+    private var onAccentIconColor: Color {
+        colorScheme == .dark ? Color.black.opacity(0.82) : .white
+    }
+
     /// Index into `audioPlayer.currentWords` where the visible caption
     /// window starts. Deliberately "sticky" rather than recentered on
     /// every word (see `updateWindow`) — words stay put while the
@@ -22,69 +34,79 @@ struct NowPlayingView: View {
         KeyboardShortcuts.getShortcut(for: .readSelection)?.description ?? "your hotkey"
     }
 
+    private var isActive: Bool { coordinator.activityState != .idle }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(voiceDisplayName, systemImage: "person.wave.2")
-                    .font(.system(size: 12, weight: .semibold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color.accentColor.opacity(0.15)))
-                    .foregroundStyle(Color.accentColor)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "person.wave.2.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text(voiceDisplayName)
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(Color.accentColor.opacity(0.15)))
+                // .primary, not accentColor — accent-as-text on its own
+                // light tint measured ~2.9:1, under the 4.5:1 AA bar for
+                // normal-size text. The capsule tint still carries the
+                // brand color; the text just needs to stay legible.
+                .foregroundStyle(.primary)
+                .accessibilityLabel("Voice: \(voiceDisplayName)")
 
                 Spacer()
 
+                MiniWaveform(isAnimating: audioPlayer.isPlaying)
+
                 Button(action: onOpenSettings) {
-                    Image(systemName: "gearshape")
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24, height: 24)
+                        .background(Circle().fill(Color(nsColor: .controlBackgroundColor)))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Settings")
             }
 
-            Group {
-                if let errorMessage = coordinator.errorMessage {
-                    Text(errorMessage)
-                        .foregroundStyle(.orange)
-                } else if coordinator.activityState == .active && coordinator.currentChunkText.isEmpty {
-                    HStack(spacing: 6) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text("Reading selection…")
-                    }
-                    .foregroundStyle(.secondary)
-                } else if coordinator.currentChunkText.isEmpty {
-                    Text("Select text anywhere, then press \(hotkeyLabel).")
-                        .foregroundStyle(.secondary)
-                } else if !audioPlayer.currentWords.isEmpty {
-                    highlightedCaption
-                } else {
-                    Text(coordinator.currentChunkText)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(5)
-                }
-            }
-            .font(.system(size: 13))
-            .fixedSize(horizontal: false, vertical: true)
+            captionCard
 
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Button(action: coordinator.togglePlayPause) {
                     Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
-                        .frame(width: 14, height: 14)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(onAccentIconColor)
+                        .frame(width: 38, height: 38)
+                        .background(Circle().fill(Color.accentColor))
+                        .shadow(color: Color.accentColor.opacity(0.35), radius: 4, y: 2)
                 }
-                .buttonStyle(.bordered)
-                .disabled(coordinator.activityState == .idle)
+                .buttonStyle(.plain)
+                .disabled(!isActive)
+                .opacity(isActive ? 1 : 0.4)
+                .accessibilityLabel(audioPlayer.isPlaying ? "Pause" : "Play")
 
                 Button(action: coordinator.stopReading) {
                     Image(systemName: "stop.fill")
-                        .frame(width: 14, height: 14)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(Color(nsColor: .controlBackgroundColor)))
+                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.1)))
                 }
-                .buttonStyle(.bordered)
-                .disabled(coordinator.activityState == .idle)
+                .buttonStyle(.plain)
+                .disabled(!isActive)
+                .opacity(isActive ? 1 : 0.4)
+                .accessibilityLabel("Stop")
 
                 Spacer()
 
                 Text(String(format: "%.1f×", settings.speed))
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(Color(nsColor: .controlBackgroundColor)))
             }
         }
         .onChange(of: audioPlayer.activeWordIndex) { _, newValue in
@@ -93,6 +115,35 @@ struct NowPlayingView: View {
         .onChange(of: audioPlayer.currentWords.map(\.id)) { _, _ in
             windowStart = 0
         }
+    }
+
+    private var captionCard: some View {
+        Group {
+            if let errorMessage = coordinator.errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(.orange)
+            } else if coordinator.activityState == .active && coordinator.currentChunkText.isEmpty {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Reading selection…")
+                }
+                .foregroundStyle(.secondary)
+            } else if coordinator.currentChunkText.isEmpty {
+                Text("Select text anywhere, then press \(hotkeyLabel).")
+                    .foregroundStyle(.secondary)
+            } else if !audioPlayer.currentWords.isEmpty {
+                highlightedCaption
+            } else {
+                Text(coordinator.currentChunkText)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(4)
+            }
+        }
+        .font(.system(size: 13))
+        .frame(maxWidth: .infinity, minHeight: 82, maxHeight: 82, alignment: .topLeading)
+        .clipped()
+        .cardBackground()
     }
 
     private var voiceDisplayName: String {
@@ -135,12 +186,18 @@ struct NowPlayingView: View {
             ForEach(visibleWords, id: \.index) { entry in
                 let isActive = entry.index == audioPlayer.activeWordIndex
                 Text(entry.word.text + entry.word.trailingWhitespace)
-                    .foregroundStyle(isActive ? Color.primary : Color.secondary)
+                    // Dark text on the yellow highlight regardless of
+                    // light/dark mode — `.primary` would go near-white in
+                    // dark mode, which is poor contrast on a bright
+                    // highlight (the classic "white text on yellow"
+                    // problem). A highlighter pen is always dark ink
+                    // under bright yellow; same idea here.
+                    .foregroundStyle(isActive ? Color.black.opacity(0.82) : Color.secondary)
                     .padding(.horizontal, 2)
                     .padding(.vertical, 1)
                     .background(
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(isActive ? Color.yellow.opacity(0.55) : Color.clear)
+                            .fill(isActive ? Color.yellow.opacity(0.65) : Color.clear)
                     )
             }
         }

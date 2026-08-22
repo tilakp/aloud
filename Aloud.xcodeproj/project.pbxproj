@@ -21,6 +21,8 @@
 		50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB636872AB6E1BEDBF02686 /* OnboardingView.swift */; };
 		61CBEB798406BD3C5B389576 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46B2357CDDBA97225E18B2E9 /* OnboardingWindowController.swift */; };
 		6EFF2C5FFCD6EF07F0110D44 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D91CC48C104D2C193D3E31B2 /* SettingsView.swift */; };
+		7C30FD3FE0EF8796BE1932CB /* PopoverStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06602238295978EE68965727 /* PopoverStyle.swift */; };
+		8759074C8FF76A2477076141 /* PopoverSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7668F234A49E072D915A91CC /* PopoverSize.swift */; };
 		8B4C12E0371D0CB731C5EE18 /* TextChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F1B0276E640FB0E1F432E1 /* TextChunker.swift */; };
 		9E4FED51681558E6F19B365D /* SelectionCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CE727915EB9A70D91C30FD3 /* SelectionCapture.swift */; };
 		9EB504D4AC89EE1114F36E20 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8697E1A947B9B131593233FC /* AppDelegate.swift */; };
@@ -52,6 +54,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		06602238295978EE68965727 /* PopoverStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverStyle.swift; sourceTree = "<group>"; };
 		08B6E85B2E215103006D87CC /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		0DAD333DD8D22C891FD82F20 /* Voices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Voices.swift; sourceTree = "<group>"; };
 		32637DF61C065C877797B6B9 /* KokoroEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroEngine.swift; sourceTree = "<group>"; };
@@ -64,6 +67,7 @@
 		61578A7563224FF0E33813EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		635FC3128CA8E9E800099887 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		711A9A88F9DFA9984F401A3E /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
+		7668F234A49E072D915A91CC /* PopoverSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverSize.swift; sourceTree = "<group>"; };
 		8697E1A947B9B131593233FC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8E0C33C7D244ABCFCCC77444 /* ModelAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelAsset.swift; sourceTree = "<group>"; };
 		8EB636872AB6E1BEDBF02686 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -122,6 +126,8 @@
 			children = (
 				4210FEB266062D24C3606563 /* FlowLayout.swift */,
 				711A9A88F9DFA9984F401A3E /* NowPlayingView.swift */,
+				7668F234A49E072D915A91CC /* PopoverSize.swift */,
+				06602238295978EE68965727 /* PopoverStyle.swift */,
 				980021F02B4A5A9D0AA0A2AB /* PopoverView.swift */,
 				D91CC48C104D2C193D3E31B2 /* SettingsView.swift */,
 				BD1A21D816965DFE3E9557B7 /* StatusIconRenderer.swift */,
@@ -309,6 +315,8 @@
 				50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */,
 				61CBEB798406BD3C5B389576 /* OnboardingWindowController.swift in Sources */,
 				D09FB55FF1895256DA07393C /* PermissionsManager.swift in Sources */,
+				8759074C8FF76A2477076141 /* PopoverSize.swift in Sources */,
+				7C30FD3FE0EF8796BE1932CB /* PopoverStyle.swift in Sources */,
 				504AA7B11190CC5EE8C80019 /* PopoverView.swift in Sources */,
 				9E4FED51681558E6F19B365D /* SelectionCapture.swift in Sources */,
 				E3F099207A7265D8EC0D053A /* SettingsStore.swift in Sources */,
@@ -447,6 +455,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -458,7 +467,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 0.1.2;
+				MARKETING_VERSION = 0.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tilak.Aloud;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;
@@ -469,6 +478,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -480,7 +490,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 0.1.2;
+				MARKETING_VERSION = 0.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tilak.Aloud;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;

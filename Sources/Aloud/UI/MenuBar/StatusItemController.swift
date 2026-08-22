@@ -15,8 +15,6 @@ final class StatusItemController: NSObject, NSWindowDelegate {
     private let activeFrames = StatusIconRenderer.activeFrames()
     private weak var coordinator: AppCoordinator?
 
-    private let popupSize = NSSize(width: 324, height: 360)
-
     init(coordinator: AppCoordinator) {
         self.coordinator = coordinator
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -76,6 +74,7 @@ final class StatusItemController: NSObject, NSWindowDelegate {
     private func showPopover(activate: Bool) {
         guard let coordinator, let button = statusItem.button, let buttonWindow = button.window else { return }
 
+        let popupSize = PopoverSize.nowPlaying
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: popupSize),
             styleMask: [.borderless, .fullSizeContentView],
@@ -88,32 +87,34 @@ final class StatusItemController: NSObject, NSWindowDelegate {
         window.backgroundColor = .clear
         window.isOpaque = false
         window.delegate = self
+        // Borderless already removes any resize handle; min==max size
+        // additionally blocks any resize that isn't the explicit,
+        // deliberate one this class does itself in resizePopover(to:).
+        window.minSize = popupSize
+        window.maxSize = popupSize
 
-        let container = NSVisualEffectView()
-        container.material = .popover
-        container.state = .active
+        // A solid, opaque panel rather than the translucent vibrancy
+        // material — plain layer-backed NSView, not NSVisualEffectView,
+        // since vibrancy is inherently translucent/blurred by design.
+        // controlBackgroundColor matches the cards' own fill exactly, so
+        // the whole panel reads as one consistent white/adaptive surface
+        // with card borders as the only structure, rather than two-toned.
+        let container = NSView(frame: NSRect(origin: .zero, size: popupSize))
+        container.autoresizingMask = [.width, .height]
         container.wantsLayer = true
-        container.layer?.cornerRadius = 12
+        container.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        container.layer?.cornerRadius = 14
         container.layer?.masksToBounds = true
 
-        let hosting = NSHostingView(rootView: PopoverView().environmentObject(coordinator))
-        hosting.translatesAutoresizingMaskIntoConstraints = false
+        let hosting = NSHostingView(rootView: PopoverView(onScreenChange: { [weak self] showingSettings in
+            self?.resizePopover(showingSettings: showingSettings)
+        }).environmentObject(coordinator))
+        hosting.frame = NSRect(origin: .zero, size: popupSize)
+        hosting.autoresizingMask = [.width, .height]
         container.addSubview(hosting)
-        NSLayoutConstraint.activate([
-            hosting.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            hosting.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            hosting.topAnchor.constraint(equalTo: container.topAnchor),
-            hosting.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-        ])
         window.contentView = container
 
-        let buttonFrame = buttonWindow.frame
-        let screenMaxX = (NSScreen.main?.visibleFrame.maxX ?? buttonFrame.maxX) - 8
-        let origin = NSPoint(
-            x: min(buttonFrame.midX - popupSize.width / 2, screenMaxX - popupSize.width),
-            y: buttonFrame.minY - popupSize.height - 4
-        )
-        window.setFrameOrigin(origin)
+        positionPopover(window, size: popupSize)
 
         popupWindow = window
         if activate {
@@ -128,6 +129,33 @@ final class StatusItemController: NSObject, NSWindowDelegate {
             if buttonWindow.frame.contains(NSEvent.mouseLocation) { return }
             self.closePopover()
         }
+    }
+
+    /// Positions/sizes `window` so its top edge sits just under the status
+    /// item button, for the given `size` — the top edge stays anchored
+    /// under the icon while the window grows/shrinks downward.
+    private func positionPopover(_ window: NSWindow, size: NSSize, animate: Bool = false) {
+        guard let buttonWindow = statusItem.button?.window else { return }
+        let buttonFrame = buttonWindow.frame
+        let screenMaxX = (NSScreen.main?.visibleFrame.maxX ?? buttonFrame.maxX) - 8
+        let origin = NSPoint(
+            x: min(buttonFrame.midX - size.width / 2, screenMaxX - size.width),
+            y: buttonFrame.minY - size.height - 4
+        )
+        window.setFrame(NSRect(origin: origin, size: size), display: true, animate: animate)
+    }
+
+    /// Switches the popup between its two fixed sizes when navigating
+    /// between Now Playing and Settings — a deliberate, user-initiated
+    /// change (unlike the reactive reflow the fixed-size window was
+    /// originally built to prevent), so it's fine for this one to animate.
+    private func resizePopover(showingSettings: Bool) {
+        guard let window = popupWindow else { return }
+        let size = showingSettings ? PopoverSize.settings : PopoverSize.nowPlaying
+        window.minSize = size
+        window.maxSize = size
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        positionPopover(window, size: size, animate: !reduceMotion)
     }
 
     private func closePopover() {
