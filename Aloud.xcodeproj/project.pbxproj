@@ -15,6 +15,7 @@
 		34739A70A30F4A89596E603C /* MLXUtilsLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 1C2A1F626D9C1B932D150949 /* MLXUtilsLibrary */; };
 		350482E3D05C3321B99CE897 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = C4ECC4F3D5B6DFB2B06E9190 /* KeyboardShortcuts */; };
 		44A2D2941AF76CAFA20B4DF6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D9E3B54583AAEAFCA43B0B32 /* Assets.xcassets */; };
+		44AF4CF310786CC69C053089 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4210FEB266062D24C3606563 /* FlowLayout.swift */; };
 		4FCD51F4E466B6238B34FAFE /* StatusIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1A21D816965DFE3E9557B7 /* StatusIconRenderer.swift */; };
 		504AA7B11190CC5EE8C80019 /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980021F02B4A5A9D0AA0A2AB /* PopoverView.swift */; };
 		50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB636872AB6E1BEDBF02686 /* OnboardingView.swift */; };
@@ -54,6 +55,7 @@
 		08B6E85B2E215103006D87CC /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		0DAD333DD8D22C891FD82F20 /* Voices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Voices.swift; sourceTree = "<group>"; };
 		32637DF61C065C877797B6B9 /* KokoroEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroEngine.swift; sourceTree = "<group>"; };
+		4210FEB266062D24C3606563 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		46B2357CDDBA97225E18B2E9 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
 		46F1B0276E640FB0E1F432E1 /* TextChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextChunker.swift; sourceTree = "<group>"; };
 		56B0BD69C310FEC38D7979E3 /* FileDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDownloader.swift; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 		324F3A3E1A06E7EE9882B024 /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
+				4210FEB266062D24C3606563 /* FlowLayout.swift */,
 				711A9A88F9DFA9984F401A3E /* NowPlayingView.swift */,
 				980021F02B4A5A9D0AA0A2AB /* PopoverView.swift */,
 				D91CC48C104D2C193D3E31B2 /* SettingsView.swift */,
@@ -297,6 +300,7 @@
 				9EB504D4AC89EE1114F36E20 /* AppDelegate.swift in Sources */,
 				B07175C7C7350D728767CDD3 /* AudioPlayer.swift in Sources */,
 				123F5668B85837B3CD463D3B /* FileDownloader.swift in Sources */,
+				44AF4CF310786CC69C053089 /* FlowLayout.swift in Sources */,
 				E2CED29616D71FC5F2503AB5 /* HotkeyManager.swift in Sources */,
 				317B5C842B1DCD5BD03209F9 /* KokoroEngine.swift in Sources */,
 				AE720CE62ADCE8D411D2B48B /* ModelAsset.swift in Sources */,
@@ -454,7 +458,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tilak.Aloud;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;
@@ -476,7 +480,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tilak.Aloud;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;

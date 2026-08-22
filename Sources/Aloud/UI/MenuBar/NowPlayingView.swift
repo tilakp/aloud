@@ -9,6 +9,15 @@ struct NowPlayingView: View {
     @ObservedObject private var settings = SettingsStore.shared
     var onOpenSettings: () -> Void
 
+    /// Index into `audioPlayer.currentWords` where the visible caption
+    /// window starts. Deliberately "sticky" rather than recentered on
+    /// every word (see `updateWindow`) — words stay put while the
+    /// highlight moves across them, and the window only scrolls forward
+    /// when the active word gets close to its edge.
+    @State private var windowStart = 0
+    private let windowSize = 15
+    private let windowMargin = 3
+
     private var hotkeyLabel: String {
         KeyboardShortcuts.getShortcut(for: .readSelection)?.description ?? "your hotkey"
     }
@@ -47,7 +56,6 @@ struct NowPlayingView: View {
                         .foregroundStyle(.secondary)
                 } else if !audioPlayer.currentWords.isEmpty {
                     highlightedCaption
-                        .lineLimit(5)
                 } else {
                     Text(coordinator.currentChunkText)
                         .foregroundStyle(.secondary)
@@ -79,26 +87,62 @@ struct NowPlayingView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .onChange(of: audioPlayer.activeWordIndex) { _, newValue in
+            updateWindow(for: newValue)
+        }
+        .onChange(of: audioPlayer.currentWords.map(\.id)) { _, _ in
+            windowStart = 0
+        }
     }
 
     private var voiceDisplayName: String {
         Voices.byID(coordinator.currentVoice)?.name ?? coordinator.currentVoice
     }
 
-    /// Builds one `Text` out of every word in the current chunk, styling
-    /// the word at `activeWordIndex` distinctly — SwiftUI's `Text`
-    /// concatenation (`+`) preserves per-segment font/color/weight, which
-    /// is enough to read clearly as "this word, right now" without needing
-    /// a custom wrapping layout just for a highlight background.
-    private var highlightedCaption: Text {
-        audioPlayer.currentWords.enumerated().reduce(Text("")) { result, entry in
-            let (index, word) = entry
-            let isActive = index == audioPlayer.activeWordIndex
-            var segment = Text(word.text + word.trailingWhitespace)
-            segment = isActive
-                ? segment.foregroundColor(Color.accentColor).fontWeight(.bold)
-                : segment.foregroundColor(.secondary)
-            return result + segment
+    /// A window of words starting at `windowStart`, rather than the whole
+    /// chunk — keeps the caption to a couple of lines regardless of how
+    /// long the chunk is.
+    private var visibleWords: [(index: Int, word: SpokenWord)] {
+        let words = audioPlayer.currentWords
+        guard !words.isEmpty else { return [] }
+        let start = min(windowStart, max(0, words.count - 1))
+        let end = min(words.count, start + windowSize)
+        return (start..<end).map { ($0, words[$0]) }
+    }
+
+    /// Only advances the window when the active word is about to scroll
+    /// past its edge — most word-to-word transitions leave every visible
+    /// word exactly where it was, so only the highlight moves. Advancing
+    /// on every single word (a naive recenter-on-active approach) would
+    /// still shift the whole line's layout on almost every word, which is
+    /// the same kind of distracting jitter a font-weight change causes.
+    private func updateWindow(for active: Int?) {
+        guard let active else { return }
+        if active < windowStart + windowMargin {
+            windowStart = max(0, active - windowMargin)
+        } else if active > windowStart + windowSize - windowMargin {
+            windowStart = max(0, active - windowMargin)
+        }
+    }
+
+    /// Highlights the active word with a background fill rather than a
+    /// font-weight change — bolding shifts each word's rendered width,
+    /// which reflows the whole line as the highlight moves; a background
+    /// doesn't. `Text` concatenation can't carry a per-segment background,
+    /// so this lays out each word as its own view via FlowLayout instead.
+    private var highlightedCaption: some View {
+        FlowLayout(horizontalSpacing: 0, verticalSpacing: 3) {
+            ForEach(visibleWords, id: \.index) { entry in
+                let isActive = entry.index == audioPlayer.activeWordIndex
+                Text(entry.word.text + entry.word.trailingWhitespace)
+                    .foregroundStyle(isActive ? Color.primary : Color.secondary)
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(isActive ? Color.yellow.opacity(0.55) : Color.clear)
+                    )
+            }
         }
     }
 }
