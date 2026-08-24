@@ -21,6 +21,20 @@ final class AudioPlayer: ObservableObject {
     private var isScheduleComplete = false
     private var onAllChunksFinished: (() -> Void)?
 
+    /// Bumped by every `stop()` (so by every `reset()` too, which calls
+    /// it). `AVAudioPlayerNode` fires a buffer's completion handler when
+    /// playback is stopped, not just when the buffer finishes playing —
+    /// including for buffers left over from whatever read was just
+    /// interrupted. Those handlers are dispatched onto the main queue and
+    /// land *after* `stop()`/`reset()` has already zeroed `pendingBuffers`
+    /// for the new read, so without this guard they'd decrement the new
+    /// read's counter for buffers that belonged to the old one — it could
+    /// go negative and never legitimately hit exactly 0 again, leaving
+    /// the "all done" check (and the status icon animation) stuck
+    /// forever. Every async completion callback checks it was scheduled
+    /// in the generation that's still current before touching state.
+    private var generation = 0
+
     private var wordsByChunk: [Int: [SpokenWord]] = [:]
     private var currentChunkStartDate: Date?
     private var pauseDate: Date?
@@ -35,8 +49,12 @@ final class AudioPlayer: ObservableObject {
         engine.attach(playerNode)
     }
 
-    /// Call before enqueueing the first chunk of a new read.
-    func reset(totalChunks: Int, onFinished: @escaping () -> Void) {
+    /// Call before enqueueing the first chunk of a new read. Returns the
+    /// generation token for this read — pass it back to `finishSchedule`
+    /// so a stale synthesis task from an interrupted read can't mark the
+    /// wrong read's schedule complete.
+    @discardableResult
+    func reset(totalChunks: Int, onFinished: @escaping () -> Void) -> Int {
         stop()
         self.totalChunks = totalChunks
         currentChunkIndex = 0
@@ -45,6 +63,7 @@ final class AudioPlayer: ObservableObject {
         isScheduleComplete = false
         wordsByChunk = [:]
         onAllChunksFinished = onFinished
+        return generation
     }
 
     func enqueue(samples: [Float], words: [SpokenWord], sampleRate: Double) throws {
@@ -71,11 +90,12 @@ final class AudioPlayer: ObservableObject {
         scheduledCount += 1
         pendingBuffers += 1
         let chunkNumber = scheduledCount
+        let scheduledGeneration = generation
         wordsByChunk[chunkNumber] = words
 
         playerNode.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, self.generation == scheduledGeneration else { return }
                 self.currentChunkIndex = chunkNumber
                 self.pendingBuffers -= 1
                 // This buffer just finished, so — with buffers scheduled
@@ -138,7 +158,14 @@ final class AudioPlayer: ObservableObject {
     /// unreachable: it was gated on `scheduledCount >= totalChunks`, but a
     /// skipped chunk never advances `scheduledCount`, which is only
     /// incremented for chunks that actually enqueue.
-    func finishSchedule() {
+    ///
+    /// - Parameter generation: the token returned by the `reset()` call
+    ///   that started this read. If a newer read has started since (this
+    ///   read was interrupted), the call is ignored — otherwise a
+    ///   cancelled synthesis task finishing its last iteration could mark
+    ///   a completely different, newer read's schedule complete.
+    func finishSchedule(generation: Int) {
+        guard generation == self.generation else { return }
         isScheduleComplete = true
         checkFinished()
     }
@@ -174,6 +201,7 @@ final class AudioPlayer: ObservableObject {
     }
 
     func stop() {
+        generation += 1
         playerNode.stop()
         engine.stop()
         isPlaying = false

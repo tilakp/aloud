@@ -119,7 +119,7 @@ final class AppCoordinator: ObservableObject {
         }
 
         currentVoice = voice
-        audioPlayer.reset(totalChunks: chunks.count) { [weak self] in
+        let generation = audioPlayer.reset(totalChunks: chunks.count) { [weak self] in
             guard let self else { return }
             activityState = .idle
             currentChunkText = ""
@@ -159,8 +159,11 @@ final class AppCoordinator: ObservableObject {
             // Whether every chunk enqueued successfully or some were
             // skipped, the loop is done attempting them — let AudioPlayer
             // know so it can detect completion even when fewer buffers
-            // were scheduled than the original chunk count.
-            audioPlayer.finishSchedule()
+            // were scheduled than the original chunk count. The
+            // generation guard inside finishSchedule keeps a cancelled
+            // task (superseded by a newer read) from marking the wrong
+            // read's schedule complete.
+            audioPlayer.finishSchedule(generation: generation)
         }
     }
 }
