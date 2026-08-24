@@ -35,29 +35,38 @@ struct NowPlayingView: View {
     }
 
     private var isActive: Bool { coordinator.activityState != .idle }
+    /// A finished read leaves its caption in place so it can be replayed —
+    /// this mirrors that same signal to decide whether Play should be
+    /// enabled even while idle.
+    private var canReplay: Bool { !coordinator.currentChunkText.isEmpty }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: "person.wave.2.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text(voiceDisplayName)
-                        .font(.system(size: 12, weight: .semibold))
+                Button(action: onOpenSettings) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.wave.2.fill")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text(voiceDisplayName)
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(Color.accentColor.opacity(0.15)))
+                    // .primary, not accentColor — accent-as-text on its own
+                    // light tint measured ~2.9:1, under the 4.5:1 AA bar for
+                    // normal-size text. The capsule tint still carries the
+                    // brand color; the text just needs to stay legible.
+                    .foregroundStyle(.primary)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(Color.accentColor.opacity(0.15)))
-                // .primary, not accentColor — accent-as-text on its own
-                // light tint measured ~2.9:1, under the 4.5:1 AA bar for
-                // normal-size text. The capsule tint still carries the
-                // brand color; the text just needs to stay legible.
-                .foregroundStyle(.primary)
-                .accessibilityLabel("Voice: \(voiceDisplayName)")
+                .buttonStyle(.plain)
+                .accessibilityLabel("Voice: \(voiceDisplayName). Open Settings.")
 
                 Spacer()
 
-                MiniWaveform(isAnimating: audioPlayer.isPlaying)
+                if isActive {
+                    MiniWaveform(isAnimating: audioPlayer.isPlaying)
+                }
 
                 Button(action: onOpenSettings) {
                     Image(systemName: "gearshape.fill")
@@ -82,9 +91,9 @@ struct NowPlayingView: View {
                         .shadow(color: Color.accentColor.opacity(0.35), radius: 4, y: 2)
                 }
                 .buttonStyle(.plain)
-                .disabled(!isActive)
-                .opacity(isActive ? 1 : 0.4)
-                .accessibilityLabel(audioPlayer.isPlaying ? "Pause" : "Play")
+                .disabled(!isActive && !canReplay)
+                .opacity((isActive || canReplay) ? 1 : 0.4)
+                .accessibilityLabel(audioPlayer.isPlaying ? "Pause" : (isActive ? "Play" : "Replay"))
 
                 Button(action: coordinator.stopReading) {
                     Image(systemName: "stop.fill")
@@ -101,12 +110,16 @@ struct NowPlayingView: View {
 
                 Spacer()
 
-                Text(String(format: "%.1f×", settings.speed))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 5)
-                    .background(Capsule().fill(Color(nsColor: .controlBackgroundColor)))
+                Button(action: onOpenSettings) {
+                    Text(String(format: "%.1f×", settings.speed))
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(Color(nsColor: .controlBackgroundColor)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Speed: \(String(format: "%.1f×", settings.speed)). Open Settings.")
             }
         }
         .onChange(of: audioPlayer.activeWordIndex) { _, newValue in

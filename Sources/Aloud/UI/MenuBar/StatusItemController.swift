@@ -180,7 +180,7 @@ final class StatusItemController: NSObject, NSWindowDelegate {
         case .idle:
             animationTimer?.invalidate()
             animationTimer = nil
-            statusItem.button?.image = idleImage
+            setIcon(idleImage)
         case .active:
             startAnimating()
         }
@@ -190,7 +190,7 @@ final class StatusItemController: NSObject, NSWindowDelegate {
         guard animationTimer == nil else { return }
 
         if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            statusItem.button?.image = activeFrames.last
+            setIcon(activeFrames.last)
             return
         }
 
@@ -199,8 +199,24 @@ final class StatusItemController: NSObject, NSWindowDelegate {
             Task { @MainActor in
                 guard let self else { return }
                 self.animationFrame = (self.animationFrame + 1) % self.activeFrames.count
-                self.statusItem.button?.image = self.activeFrames[self.animationFrame]
+                self.setIcon(self.activeFrames[self.animationFrame])
             }
         }
+    }
+
+    /// Assigns the button's image and forces an immediate, synchronous
+    /// redraw rather than relying on AppKit's normal (coalesced, next
+    /// runloop pass) display invalidation. On this Mac, third-party status
+    /// items are hosted out-of-process by Control Center (see the note on
+    /// `showPopover`), and back-to-back image swaps — the last animation
+    /// frame followed almost immediately by the revert to idle, exactly
+    /// when a read finishes — could otherwise have their final frame
+    /// coalesced away by that out-of-process snapshotting, leaving a stale
+    /// animated frame visibly stuck on screen even though this button's
+    /// own `image` property (and `activityState`) had already moved on.
+    private func setIcon(_ image: NSImage?) {
+        guard let button = statusItem.button else { return }
+        button.image = image
+        button.display()
     }
 }

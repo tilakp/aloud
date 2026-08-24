@@ -27,6 +27,11 @@ final class AppCoordinator: ObservableObject {
 
     private var chunks: [String] = []
     private var synthesisTask: Task<Void, Never>?
+    /// The full text of the last non-preview read, kept so the Now
+    /// Playing panel's Play button can replay it once the read has
+    /// finished (rather than only being usable to pause/resume a read
+    /// that's still in progress).
+    private var lastReadText: String?
 
     var hasAccessibilityPermission: Bool { PermissionsManager.isTrusted() }
 
@@ -73,7 +78,8 @@ final class AppCoordinator: ObservableObject {
         }
     }
 
-    /// Used by the "Say something" onboarding test read.
+    /// Reads arbitrary text — used by the "Say something" onboarding test
+    /// read, and to replay the last read from `togglePlayPause()`.
     func readText(_ text: String) {
         activityState = .active
         errorMessage = nil
@@ -94,6 +100,14 @@ final class AppCoordinator: ObservableObject {
     }
 
     func togglePlayPause() {
+        guard activityState == .active else {
+            // Nothing currently playing/paused to resume — if there's a
+            // finished read on hand, treat Play as "replay it".
+            if let lastReadText {
+                readText(lastReadText)
+            }
+            return
+        }
         if audioPlayer.isPlaying {
             audioPlayer.pause()
         } else {
@@ -119,10 +133,16 @@ final class AppCoordinator: ObservableObject {
         }
 
         currentVoice = voice
+        if !isPreview {
+            lastReadText = text
+        }
         let generation = audioPlayer.reset(totalChunks: chunks.count) { [weak self] in
             guard let self else { return }
             activityState = .idle
-            currentChunkText = ""
+            // Deliberately leave currentChunkText in place once a read
+            // finishes naturally, rather than clearing it — so the
+            // caption stays visible and Play can replay it. stopReading()
+            // (an explicit Stop) still clears it.
             // A preview temporarily shows the previewed voice as "current"
             // in the popover — revert to the real default once it's done,
             // rather than leaving it looking like the default changed.
