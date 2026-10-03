@@ -13,29 +13,45 @@ voice. Local-only, no cloud calls, no Python.
 4. The menu bar icon itself changes the instant the hotkey fires — before
    any audio starts — so it's always obvious whether Aloud is idle or doing
    something.
-5. A small popover shows play/pause/stop, the voice in use, and (optionally)
-   the sentence currently being spoken. Voice selection and settings live in
-   that same popover — there is no separate main window.
+5. Clicking the icon opens a standard menu with play/pause/stop, voice,
+   speed, hotkey and launch-at-login. There is no main window.
 
 ## 2. Tech stack
 
 | Concern | Choice |
 |---|---|
 | UI | SwiftUI (macOS 15+), AppKit `NSStatusItem` for the menu bar item |
-| TTS engine | [`mlalma/kokoro-ios`](https://github.com/mlalma/kokoro-ios) — Kokoro-82M ported to **MLX Swift**, runs fully on-device, no Python/espeak. Apache-licensed model, MIT-licensed Swift port. |
-| G2P (text→phonemes) | Bundled `MisakiSwift`, shipped inside the package — no separate install |
-| ML runtime | Apple MLX (GPU via Metal) |
+| TTS engine | [`FluidInference/FluidAudio`](https://github.com/FluidInference/FluidAudio) `KokoroAneManager`: Kokoro-82M converted to CoreML, runs fully on-device. Apache-licensed model and Swift package. |
+| G2P (text→phonemes) | FluidAudio's English frontend (Misaki US lexicon + CoreML G2P fallback). US English only. |
+| ML runtime | CoreML: 4 stages on the Neural Engine, 3 on CPU/GPU |
 | Global hotkey | [`sindresorhus/KeyboardShortcuts`](https://github.com/sindresorhus/KeyboardShortcuts) — MIT, 2.7k★, actively maintained, gives us the recorder UI for free |
 | Text selection capture | Accessibility API (`AXUIElement`), with simulated-copy as a silent fallback (see §5.2) |
 | Audio playback | `AVAudioEngine` + `AVAudioPlayerNode`, streaming buffers per chunk |
-| Model distribution | Downloaded on first launch to `~/Library/Application Support/Aloud/Models/`, not bundled in the app binary |
+| Model distribution | Downloaded on first launch by FluidAudio from Hugging Face into `~/.cache/fluidaudio/Models/`, not bundled in the app binary |
 
-**Platform floor:** macOS 15.0+, Apple Silicon only (MLX requirement) — confirmed
+**Platform floor:** macOS 15.0+, Apple Silicon only (Neural Engine) — confirmed
 acceptable. This machine (macOS 26.6, arm64) satisfies it.
 
-## 3. Why kokoro-ios over the alternatives
+## 3. Engine choice
 
-Checked three "native Swift, no Python" options:
+**Current (October 2026): FluidAudio.** v0.1.x used `mlalma/kokoro-ios` on
+MLX (below). It was replaced because kokoro-ios had no commits after
+January 2026, and FluidAudio runs the same Kokoro-82M weights faster and
+with much less memory. Measured on an M2 for the same 420-character
+paragraph:
+
+| | kokoro-ios (MLX) | FluidAudio (CoreML) |
+|---|---|---|
+| Warm hotkey-to-first-audio | ~700 ms | ~280 ms |
+| Peak memory footprint | 8.6 GB | 0.73 GB |
+| Model download | ~340 MB | ~130 MB |
+
+Costs of the switch: no per-word timestamps (word highlighting was
+dropped), US pronunciation only (the UK voices were dropped), and the
+download comes from Hugging Face instead of a pinned GitHub commit.
+
+**Original choice (August 2026):** checked three "native Swift, no Python"
+options:
 
 | Repo | Verdict |
 |---|---|
@@ -56,7 +72,7 @@ flowchart TB
     end
     subgraph Synthesis
         CHUNK[TextChunker<br/>sentence-split, ≤500 tokens]
-        ENGINE[KokoroEngine<br/>wraps KokoroTTS]
+        ENGINE[KokoroEngine<br/>wraps KokoroAneManager]
         MODEL[(Model files<br/>Application Support)]
     end
     subgraph Playback
@@ -64,7 +80,7 @@ flowchart TB
     end
     subgraph UI
         ICON[Status item icon<br/>idle / active]
-        MENUBAR[Popover<br/>Now Playing + Settings]
+        MENUBAR[Status menu<br/>controls + settings]
     end
 
     HK --> SEL
@@ -112,59 +128,59 @@ during onboarding.
 
 ### 5.3 TextChunker
 Kokoro caps input at **510 phoneme tokens** per call
-(`KokoroTTS.Constants.maxTokenCount`), which in practice is roughly 1–2
+(`KokoroAneConstants.maxPhonemeLength`), which in practice is roughly 1–2
 sentences of English. Arbitrary selected text (a paragraph, an article) must
 be split before synthesis:
 
 - Split on sentence boundaries (`NLTokenizer` sentence unit) first.
 - If a single sentence still risks exceeding the token cap, sub-split on
   clause punctuation (`,`, `;`, `—`) as a fallback.
+- A first sentence longer than 80 characters is split at its first clause
+  break (between characters 20 and 160), because playback can't start until
+  the first chunk has fully synthesized.
+- Short sentences after the first chunk are merged up to 250 characters, to
+  save per-call overhead.
 - Each chunk is synthesized independently and played back-to-back.
 
+FluidAudio also splits over-long phoneme input itself, so a chunk over the
+cap is no longer skipped.
+
 ### 5.4 KokoroEngine
-Wraps `KokoroTTS` from `KokoroSwift`:
+Wraps FluidAudio's `KokoroAneManager`:
 
 ```swift
-let tts = KokoroTTS(modelPath: modelURL)  // loads kokoro-v1_0.safetensors once
-let (samples, tokens) = try tts.generateAudio(
-    voice: voices[voiceName],   // MLXArray loaded from voices.npz
-    language: voiceName.hasPrefix("a") ? .enUS : .enGB,
-    text: chunkText,
-    speed: speed
-)
+let manager = KokoroAneManager()
+try await manager.initialize(preloadVoices: Set(Voices.all.map(\.id)))
+let samples = try await manager.synthesizeDetailed(text: chunkText, voice: voiceName, speed: speed).samples
 ```
 
 - `samples`: `[Float]` mono PCM @ 24kHz.
-- `tokens`: optional `[MToken]` with per-word start/end timestamps — used to
-  drive the "currently spoken word" caption in the popover (nice-to-have,
-  §11).
-- Model load happens once, lazily, on a background actor at first use (or
-  eagerly at launch once onboarding is done) — takes a few seconds, must not
-  block the UI thread.
+- All voices are preloaded at load time, so changing voice later works
+  offline.
+- The model loads at launch, followed by one short warm-up synthesis, so the
+  first real read is not the slow one.
 - To keep latency low on long selections, chunks are synthesized **serially
   but pipelined**: chunk *N+1* synthesis starts as soon as chunk *N* is
   handed to the player, so playback doesn't wait for the whole selection to
   finish generating.
 
 ### 5.5 ModelManager
-Model assets are **not bundled** in the app (327MB safetensors + 14.6MB
-voices.npz would bloat the repo/binary). Instead:
+Model assets are **not bundled** in the app. FluidAudio downloads and caches
+them in `~/.cache/fluidaudio/Models/`:
 
-- On first launch, download both files (source: the same files
-  `KokoroTestApp` ships, i.e. the MLX-converted Kokoro v1.0 weights) into
-  `~/Library/Application Support/Aloud/Models/`.
-- Show progress in an onboarding screen; verify via checksum after download.
-- Subsequent launches just check the files exist and load from disk.
-
-| File | Size | Contents |
-|---|---|---|
-| `kokoro-v1_0.safetensors` | ~327 MB | Model weights |
-| `voices.npz` | ~14.6 MB | 28 voice embeddings: `af_*`/`am_*` (US female/male), `bf_*`/`bm_*` (UK female/male) |
+- `KokoroAneResourceDownloader.ensureModels` fetches the CoreML stages (~90
+  MB) and reports progress to the onboarding screen.
+- `KokoroEngine.load()` then fetches the English G2P assets (~40 MB) and the
+  20 US voice packs, and loads everything.
+- On later launches the same calls find the cached files and only load them.
+- After a successful install, the MLX files from v0.1.x in
+  `~/Library/Application Support/Aloud/Models/` are deleted.
 
 ### 5.6 AudioPlayer
 `AVAudioEngine` + single `AVAudioPlayerNode`. Chunks are scheduled as they
 finish synthesizing (`scheduleBuffer`), giving continuous playback across
-chunk boundaries. Exposes play/pause/stop/skip-to-next-chunk to the UI.
+chunk boundaries. Exposes play/pause/stop to the UI. When a read finishes,
+the player node and engine stop, so the output device does not stay awake.
 
 ### 5.7 Status item — idle vs. active
 No dock icon; `NSStatusItem` is the app's only permanent presence, and it is
@@ -183,23 +199,25 @@ gap before sound starts. This is the main reason the icon-state signal
 exists: without it, a press that silently takes a second to produce sound is
 indistinguishable from a press that did nothing.
 
-### 5.8 Popover — Now Playing + Settings
-`NSStatusItem` click → `NSPopover` hosting a SwiftUI view with two internal
-screens (no separate window, ever):
+### 5.8 Status menu
+`NSStatusItem` click → a standard `NSMenu`, rebuilt on every open
+(`menuNeedsUpdate`) so it always shows the current state:
 
-- **Now Playing** (default view): voice-in-use chip, current-sentence
-  caption (once `MToken` timestamps are wired up), transport controls
-  (prev / play-pause / stop), scrub bar, speed. A gear icon in the header
-  swaps to Settings.
-- **Settings** (reached via the gear icon, same popover, back arrow to
-  return): voice grid (28 voices grouped by accent/gender, tap to preview,
-  tap-and-hold or a checkmark to set default), hotkey recorder
-  (`KeyboardShortcuts.Recorder`), default speed, launch-at-login toggle,
-  Accessibility permission status (with a repair/open-System-Settings
-  affordance if revoked), model file status.
+- An error line, if the last hotkey press failed (the press also beeps,
+  because no window opens).
+- Model status, while the model is downloading or if it failed (with
+  Retry).
+- Pause / Resume / Replay Last Selection, and Stop.
+- Voice submenu: 20 US voices grouped by gender. Choosing one sets it as the
+  default and plays a short sample.
+- Speed submenu: 0.5× to 2.0× in 0.1 steps.
+- Change Hotkey (shows the current one): opens a small dialog with
+  `KeyboardShortcuts.RecorderCocoa`. The recorder can't take keyboard focus
+  when it's hosted inside the menu itself.
+- Launch at Login, Grant Accessibility Access (only when missing), Quit.
 
-Both screens are sized to fit a popover (roughly 300×420pt) — the voice grid
-scrolls internally rather than growing the popover unbounded.
+The icon animation timer runs in the common run loop modes, so it keeps
+animating while the menu is open.
 
 ### 5.9 Onboarding (first launch only)
 Not an ongoing UI surface — a small transient window shown once before the
@@ -231,10 +249,8 @@ Aloud/
       AudioPlayer.swift
     UI/
       MenuBar/
-        StatusItemController.swift  # idle/active icon state
-        PopoverView.swift
-        NowPlayingView.swift
-        SettingsView.swift          # voices grid, hotkey, toggles
+        StatusItemController.swift  # icon animation + status menu
+        StatusIconRenderer.swift
       Onboarding/                   # one-time window only
     Support/
       PermissionsManager.swift
@@ -256,33 +272,29 @@ survives rebuilds.
 - Global hotkey → AX selection capture → chunked Kokoro synthesis → streaming
   playback.
 - Status item with idle/active icon states.
-- Popover: Now Playing controls + Settings screen (voice grid, hotkey
-  recorder, speed, launch-at-login, permission/model status) — no main
-  window.
+- Status menu: playback controls, voice, speed, hotkey, launch-at-login,
+  permission/model status. No main window.
 - First-run onboarding (permission + model download), one-time only.
 
 **Phase 2 (not in v1):**
-- Live word-by-word caption highlighting in the popover (data — `MToken`
-  timestamps — is already available from the engine, just needs UI).
 - Playback history / re-read past selections.
 - Per-app hotkey behavior or exclusions.
-- Multiple languages beyond en-US/en-GB (Kokoro supports more; this port's
-  `Language` enum currently only exposes `enUS`/`enGB`).
+- UK English voices, once FluidAudio's English frontend has a British
+  lexicon.
+- More languages (FluidAudio has Spanish, French, Mandarin and Japanese
+  variants).
 
 ## 9. Open risks
 
-- **Model source stability**: currently pointing at files hosted in the
-  `KokoroTestApp` repo's Git history rather than an official release
-  artifact. If that repo changes, the download URL breaks — worth mirroring
-  the files ourselves (e.g. into the app's own release assets) once the app
-  is working.
+- **Model source stability**: FluidAudio downloads from the `main` branch of
+  `FluidInference/kokoro-82m-coreml` on Hugging Face, with no pinned
+  revision or checksum. A change there changes what new installs get.
 - **AX selection gaps**: apps that don't expose `kAXSelectedTextAttribute`
   need the copy-fallback path exercised and tested (Slack, VS Code/Electron
   apps, some PDF viewers are the likely trouble spots).
-- **First-load latency**: MLX model load + first inference ("cold start") is
-  slower than steady-state; worth loading the model at app launch (after
-  onboarding) rather than on first hotkey press, so the first real read
-  isn't the slow one.
+- **OS-specific CoreML bugs**: FluidAudio warns about BNNS crashes on some
+  OS releases (it reports macOS 26.6 as fixed). Watch for synthesis crashes
+  after OS updates.
 - **Menu bar icon animation cost**: an animated status item needs a repeating
   timer/redraw while active; keep the frame count and redraw rate low (macOS
   menu bar extras are not supposed to be a CPU/battery drain) and stop the
