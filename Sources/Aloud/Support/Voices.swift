@@ -11,8 +11,6 @@ struct VoiceInfo: Identifiable, Hashable {
         switch id.prefix(2) {
         case "af": .usFemale
         case "am": .usMale
-        case "bf": .ukFemale
-        case "bm": .ukMale
         default: .usFemale
         }
     }
@@ -21,19 +19,17 @@ struct VoiceInfo: Identifiable, Hashable {
 enum VoiceGroup: String, CaseIterable {
     case usFemale = "US · Female"
     case usMale = "US · Male"
-    case ukFemale = "UK · Female"
-    case ukMale = "UK · Male"
 }
 
 enum Voices {
-    // The 28 voices bundled in voices.npz, from the Kokoro v1.0 release.
+    // The US voices from the Kokoro v1.0 release. The UK ones are left out
+    // because FluidAudio's English frontend only has a US lexicon, so they
+    // would speak with US pronunciation.
     static let all: [VoiceInfo] = [
         "af_alloy", "af_aoede", "af_bella", "af_heart", "af_jessica", "af_kore",
         "af_nicole", "af_nova", "af_river", "af_sarah", "af_sky",
         "am_adam", "am_echo", "am_eric", "am_fenrir", "am_liam", "am_michael",
         "am_onyx", "am_puck", "am_santa",
-        "bf_alice", "bf_emma", "bf_isabella", "bf_lily",
-        "bm_daniel", "bm_fable", "bm_george", "bm_lewis",
     ].map(VoiceInfo.init)
 
     static func grouped() -> [(group: VoiceGroup, voices: [VoiceInfo])] {

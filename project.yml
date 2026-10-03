@@ -6,18 +6,12 @@ options:
   createIntermediateGroups: true
 
 packages:
-  KokoroSwift:
-    url: https://github.com/mlalma/kokoro-ios.git
-    exactVersion: 1.0.11
+  FluidAudio:
+    url: https://github.com/FluidInference/FluidAudio.git
+    exactVersion: 0.17.5
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts.git
     exactVersion: 1.10.0
-  MLXUtilsLibrary:
-    url: https://github.com/mlalma/MLXUtilsLibrary.git
-    exactVersion: 0.0.6
-  MLXSwift:
-    url: https://github.com/ml-explore/mlx-swift.git
-    exactVersion: 0.30.2
 
 targets:
   Aloud:
@@ -26,15 +20,10 @@ targets:
     sources:
       - path: Sources/Aloud
     dependencies:
-      - package: KokoroSwift
-        product: KokoroSwift
-        embed: true
+      - package: FluidAudio
+        product: FluidAudio
       - package: KeyboardShortcuts
         product: KeyboardShortcuts
-      - package: MLXUtilsLibrary
-        product: MLXUtilsLibrary
-      - package: MLXSwift
-        product: MLX
     info:
       path: Sources/Aloud/Info.plist
       properties:

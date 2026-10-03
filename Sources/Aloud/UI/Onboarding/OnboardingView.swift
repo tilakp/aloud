@@ -88,15 +88,15 @@ struct OnboardingView: View {
                 .foregroundStyle(Color.accentColor)
 
             switch modelManager.state {
-            case .downloading(let label, let written, let total):
-                Text("Downloading \(label)…").font(.system(size: 13))
-                ProgressView(value: Double(written), total: Double(max(total, 1)))
+            case .downloading(let fraction):
+                Text("Downloading voice model…").font(.system(size: 13))
+                ProgressView(value: fraction)
                     .frame(maxWidth: 240)
-                Text("\(byteString(written)) / \(byteString(total))")
+                Text(fraction.formatted(.percent.precision(.fractionLength(0))))
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.secondary)
-            case .verifying:
-                Text("Verifying…").font(.system(size: 13))
+            case .preparing:
+                Text("Preparing voices…").font(.system(size: 13))
                 ProgressView().frame(maxWidth: 240)
             case .installed:
                 Label("Ready", systemImage: "checkmark.circle.fill")
@@ -152,9 +152,5 @@ struct OnboardingView: View {
         } else {
             onFinish()
         }
-    }
-
-    private func byteString(_ bytes: Int64) -> String {
-        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
 }

@@ -46,7 +46,9 @@ final class SettingsStore: ObservableObject {
 
     private init() {
         let defaults = UserDefaults.standard
-        selectedVoice = defaults.string(forKey: Keys.selectedVoice) ?? "af_heart"
+        // A saved voice that's no longer offered (the UK voices were
+        // removed) falls back to the default.
+        selectedVoice = defaults.string(forKey: Keys.selectedVoice).flatMap { Voices.byID($0)?.id } ?? "af_heart"
         speed = defaults.object(forKey: Keys.speed) as? Double ?? 1.0
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)

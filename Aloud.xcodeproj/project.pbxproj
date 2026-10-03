@@ -7,30 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		123F5668B85837B3CD463D3B /* FileDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B0BD69C310FEC38D7979E3 /* FileDownloader.swift */; };
-		1477FA460A9FC65D18EAA38B /* KokoroSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = AEC16690E38DAE54FC9E3A79 /* KokoroSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		29F89D49D5D6D7EDEB1EAC9D /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91633A9CBC7F9E6BA2350223 /* AppCoordinator.swift */; };
 		2B3AD3C862E143FD3B921E0C /* StatusItemController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F773EED1D54230017F1F9619 /* StatusItemController.swift */; };
 		317B5C842B1DCD5BD03209F9 /* KokoroEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32637DF61C065C877797B6B9 /* KokoroEngine.swift */; };
-		34739A70A30F4A89596E603C /* MLXUtilsLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 1C2A1F626D9C1B932D150949 /* MLXUtilsLibrary */; };
 		350482E3D05C3321B99CE897 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = C4ECC4F3D5B6DFB2B06E9190 /* KeyboardShortcuts */; };
 		44A2D2941AF76CAFA20B4DF6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D9E3B54583AAEAFCA43B0B32 /* Assets.xcassets */; };
-		44AF4CF310786CC69C053089 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4210FEB266062D24C3606563 /* FlowLayout.swift */; };
 		4FCD51F4E466B6238B34FAFE /* StatusIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1A21D816965DFE3E9557B7 /* StatusIconRenderer.swift */; };
-		504AA7B11190CC5EE8C80019 /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 980021F02B4A5A9D0AA0A2AB /* PopoverView.swift */; };
 		50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB636872AB6E1BEDBF02686 /* OnboardingView.swift */; };
 		61CBEB798406BD3C5B389576 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46B2357CDDBA97225E18B2E9 /* OnboardingWindowController.swift */; };
-		6EFF2C5FFCD6EF07F0110D44 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D91CC48C104D2C193D3E31B2 /* SettingsView.swift */; };
-		7C30FD3FE0EF8796BE1932CB /* PopoverStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06602238295978EE68965727 /* PopoverStyle.swift */; };
-		8759074C8FF76A2477076141 /* PopoverSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7668F234A49E072D915A91CC /* PopoverSize.swift */; };
 		8B4C12E0371D0CB731C5EE18 /* TextChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F1B0276E640FB0E1F432E1 /* TextChunker.swift */; };
 		9E4FED51681558E6F19B365D /* SelectionCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CE727915EB9A70D91C30FD3 /* SelectionCapture.swift */; };
 		9EB504D4AC89EE1114F36E20 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8697E1A947B9B131593233FC /* AppDelegate.swift */; };
-		A8A818BC11F0F4A98106C276 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = B930A914CA8368F59A2EE5A4 /* MLX */; };
-		AE720CE62ADCE8D411D2B48B /* ModelAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0C33C7D244ABCFCCC77444 /* ModelAsset.swift */; };
 		B07175C7C7350D728767CDD3 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE631FF0A8448553C061BA1D /* AudioPlayer.swift */; };
-		B54A259A44757BAF25C47FA4 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 711A9A88F9DFA9984F401A3E /* NowPlayingView.swift */; };
-		C2A1CEA9542F4E3FD2CBF0E7 /* KokoroSwift in Frameworks */ = {isa = PBXBuildFile; productRef = AEC16690E38DAE54FC9E3A79 /* KokoroSwift */; };
+		C2A1CEA9542F4E3FD2CBF0E7 /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = EF67180D11F3174E0C2AA0FE /* FluidAudio */; };
 		C36F1A5A22FABAF3198E57FA /* Voices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAD333DD8D22C891FD82F20 /* Voices.swift */; };
 		C76F1953457BC8720F9B3D90 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEA8E30A7C60C17EAF0C9124 /* main.swift */; };
 		D09FB55FF1895256DA07393C /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B6E85B2E215103006D87CC /* PermissionsManager.swift */; };
@@ -39,44 +28,22 @@
 		ED7C1CFD787A348D70C3A639 /* ModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6022C2831C4E7FA07FE46896 /* ModelManager.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		F40055D9E76AB1DD613D1817 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				1477FA460A9FC65D18EAA38B /* KokoroSwift in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		06602238295978EE68965727 /* PopoverStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverStyle.swift; sourceTree = "<group>"; };
 		08B6E85B2E215103006D87CC /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		0DAD333DD8D22C891FD82F20 /* Voices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Voices.swift; sourceTree = "<group>"; };
 		32637DF61C065C877797B6B9 /* KokoroEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroEngine.swift; sourceTree = "<group>"; };
-		4210FEB266062D24C3606563 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		46B2357CDDBA97225E18B2E9 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
 		46F1B0276E640FB0E1F432E1 /* TextChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextChunker.swift; sourceTree = "<group>"; };
-		56B0BD69C310FEC38D7979E3 /* FileDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDownloader.swift; sourceTree = "<group>"; };
 		5CE727915EB9A70D91C30FD3 /* SelectionCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionCapture.swift; sourceTree = "<group>"; };
 		6022C2831C4E7FA07FE46896 /* ModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManager.swift; sourceTree = "<group>"; };
 		61578A7563224FF0E33813EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		635FC3128CA8E9E800099887 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
-		711A9A88F9DFA9984F401A3E /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
-		7668F234A49E072D915A91CC /* PopoverSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverSize.swift; sourceTree = "<group>"; };
 		8697E1A947B9B131593233FC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		8E0C33C7D244ABCFCCC77444 /* ModelAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelAsset.swift; sourceTree = "<group>"; };
 		8EB636872AB6E1BEDBF02686 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		91633A9CBC7F9E6BA2350223 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
-		980021F02B4A5A9D0AA0A2AB /* PopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverView.swift; sourceTree = "<group>"; };
 		BD1A21D816965DFE3E9557B7 /* StatusIconRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusIconRenderer.swift; sourceTree = "<group>"; };
 		CD310C0AA3D97770B28D1205 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		CE631FF0A8448553C061BA1D /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
-		D91CC48C104D2C193D3E31B2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D9E3B54583AAEAFCA43B0B32 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DEA8E30A7C60C17EAF0C9124 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F773EED1D54230017F1F9619 /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
@@ -88,10 +55,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C2A1CEA9542F4E3FD2CBF0E7 /* KokoroSwift in Frameworks */,
+				C2A1CEA9542F4E3FD2CBF0E7 /* FluidAudio in Frameworks */,
 				350482E3D05C3321B99CE897 /* KeyboardShortcuts in Frameworks */,
-				34739A70A30F4A89596E603C /* MLXUtilsLibrary in Frameworks */,
-				A8A818BC11F0F4A98106C276 /* MLX in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,12 +89,6 @@
 		324F3A3E1A06E7EE9882B024 /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
-				4210FEB266062D24C3606563 /* FlowLayout.swift */,
-				711A9A88F9DFA9984F401A3E /* NowPlayingView.swift */,
-				7668F234A49E072D915A91CC /* PopoverSize.swift */,
-				06602238295978EE68965727 /* PopoverStyle.swift */,
-				980021F02B4A5A9D0AA0A2AB /* PopoverView.swift */,
-				D91CC48C104D2C193D3E31B2 /* SettingsView.swift */,
 				BD1A21D816965DFE3E9557B7 /* StatusIconRenderer.swift */,
 				F773EED1D54230017F1F9619 /* StatusItemController.swift */,
 			);
@@ -156,9 +115,7 @@
 		75E28C5B1B6E2A71B758C987 /* Synthesis */ = {
 			isa = PBXGroup;
 			children = (
-				56B0BD69C310FEC38D7979E3 /* FileDownloader.swift */,
 				32637DF61C065C877797B6B9 /* KokoroEngine.swift */,
-				8E0C33C7D244ABCFCCC77444 /* ModelAsset.swift */,
 				6022C2831C4E7FA07FE46896 /* ModelManager.swift */,
 				46F1B0276E640FB0E1F432E1 /* TextChunker.swift */,
 			);
@@ -229,7 +186,6 @@
 				EB57D8AD9BF86A1181EA5623 /* Sources */,
 				C6506615DEAC548E1E7AA506 /* Resources */,
 				F916B3A4C07F517AEDA128C3 /* Frameworks */,
-				F40055D9E76AB1DD613D1817 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -237,10 +193,8 @@
 			);
 			name = Aloud;
 			packageProductDependencies = (
-				AEC16690E38DAE54FC9E3A79 /* KokoroSwift */,
+				EF67180D11F3174E0C2AA0FE /* FluidAudio */,
 				C4ECC4F3D5B6DFB2B06E9190 /* KeyboardShortcuts */,
-				1C2A1F626D9C1B932D150949 /* MLXUtilsLibrary */,
-				B930A914CA8368F59A2EE5A4 /* MLX */,
 			);
 			productName = Aloud;
 			productReference = F9F163B4C6A66048AA83B441 /* Aloud.app */;
@@ -271,10 +225,8 @@
 			mainGroup = 7D90FB11EAE67A72C3C4CD33;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				317DCAD56F7EEF52805946A5 /* XCRemoteSwiftPackageReference "FluidAudio" */,
 				6A9C9808864D0F8260D67790 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
-				821D82710BBADE1D19FFA9CC /* XCRemoteSwiftPackageReference "kokoro-ios" */,
-				831F36C18DB0A907A02C3573 /* XCRemoteSwiftPackageReference "mlx-swift" */,
-				1FD0AAE5E79275F6B2B0B1B3 /* XCRemoteSwiftPackageReference "MLXUtilsLibrary" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8E3BF1A0F07212AF07737B95 /* Products */;
@@ -305,22 +257,14 @@
 				29F89D49D5D6D7EDEB1EAC9D /* AppCoordinator.swift in Sources */,
 				9EB504D4AC89EE1114F36E20 /* AppDelegate.swift in Sources */,
 				B07175C7C7350D728767CDD3 /* AudioPlayer.swift in Sources */,
-				123F5668B85837B3CD463D3B /* FileDownloader.swift in Sources */,
-				44AF4CF310786CC69C053089 /* FlowLayout.swift in Sources */,
 				E2CED29616D71FC5F2503AB5 /* HotkeyManager.swift in Sources */,
 				317B5C842B1DCD5BD03209F9 /* KokoroEngine.swift in Sources */,
-				AE720CE62ADCE8D411D2B48B /* ModelAsset.swift in Sources */,
 				ED7C1CFD787A348D70C3A639 /* ModelManager.swift in Sources */,
-				B54A259A44757BAF25C47FA4 /* NowPlayingView.swift in Sources */,
 				50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */,
 				61CBEB798406BD3C5B389576 /* OnboardingWindowController.swift in Sources */,
 				D09FB55FF1895256DA07393C /* PermissionsManager.swift in Sources */,
-				8759074C8FF76A2477076141 /* PopoverSize.swift in Sources */,
-				7C30FD3FE0EF8796BE1932CB /* PopoverStyle.swift in Sources */,
-				504AA7B11190CC5EE8C80019 /* PopoverView.swift in Sources */,
 				9E4FED51681558E6F19B365D /* SelectionCapture.swift in Sources */,
 				E3F099207A7265D8EC0D053A /* SettingsStore.swift in Sources */,
-				6EFF2C5FFCD6EF07F0110D44 /* SettingsView.swift in Sources */,
 				4FCD51F4E466B6238B34FAFE /* StatusIconRenderer.swift in Sources */,
 				2B3AD3C862E143FD3B921E0C /* StatusItemController.swift in Sources */,
 				8B4C12E0371D0CB731C5EE18 /* TextChunker.swift in Sources */,
@@ -521,12 +465,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		1FD0AAE5E79275F6B2B0B1B3 /* XCRemoteSwiftPackageReference "MLXUtilsLibrary" */ = {
+		317DCAD56F7EEF52805946A5 /* XCRemoteSwiftPackageReference "FluidAudio" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mlalma/MLXUtilsLibrary.git";
+			repositoryURL = "https://github.com/FluidInference/FluidAudio.git";
 			requirement = {
 				kind = exactVersion;
-				version = 0.0.6;
+				version = 0.17.5;
 			};
 		};
 		6A9C9808864D0F8260D67790 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
@@ -537,44 +481,18 @@
 				version = 1.10.0;
 			};
 		};
-		821D82710BBADE1D19FFA9CC /* XCRemoteSwiftPackageReference "kokoro-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mlalma/kokoro-ios.git";
-			requirement = {
-				kind = exactVersion;
-				version = 1.0.11;
-			};
-		};
-		831F36C18DB0A907A02C3573 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ml-explore/mlx-swift.git";
-			requirement = {
-				kind = exactVersion;
-				version = 0.30.2;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		1C2A1F626D9C1B932D150949 /* MLXUtilsLibrary */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1FD0AAE5E79275F6B2B0B1B3 /* XCRemoteSwiftPackageReference "MLXUtilsLibrary" */;
-			productName = MLXUtilsLibrary;
-		};
-		AEC16690E38DAE54FC9E3A79 /* KokoroSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 821D82710BBADE1D19FFA9CC /* XCRemoteSwiftPackageReference "kokoro-ios" */;
-			productName = KokoroSwift;
-		};
-		B930A914CA8368F59A2EE5A4 /* MLX */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 831F36C18DB0A907A02C3573 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLX;
-		};
 		C4ECC4F3D5B6DFB2B06E9190 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6A9C9808864D0F8260D67790 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
+		};
+		EF67180D11F3174E0C2AA0FE /* FluidAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 317DCAD56F7EEF52805946A5 /* XCRemoteSwiftPackageReference "FluidAudio" */;
+			productName = FluidAudio;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

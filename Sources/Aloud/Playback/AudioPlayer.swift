@@ -3,15 +3,6 @@ import AVFoundation
 @MainActor
 final class AudioPlayer: ObservableObject {
     @Published private(set) var isPlaying = false
-    @Published private(set) var currentChunkIndex = 0
-    @Published private(set) var totalChunks = 0
-
-    /// Words of the chunk currently playing, and which one is being
-    /// spoken right now — driven by a wall-clock timer against each
-    /// chunk's start time, since Kokoro's per-word timestamps are
-    /// relative to the start of that chunk's own audio.
-    @Published private(set) var currentWords: [SpokenWord] = []
-    @Published private(set) var activeWordIndex: Int?
 
     private let engine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
@@ -35,11 +26,6 @@ final class AudioPlayer: ObservableObject {
     /// in the generation that's still current before touching state.
     private var generation = 0
 
-    private var wordsByChunk: [Int: [SpokenWord]] = [:]
-    private var currentChunkStartDate: Date?
-    private var pauseDate: Date?
-    private var highlightTimer: Timer?
-
     enum PlayerError: LocalizedError {
         case bufferCreationFailed
         var errorDescription: String? { "Couldn't create an audio buffer for playback." }
@@ -54,19 +40,13 @@ final class AudioPlayer: ObservableObject {
     /// so a stale synthesis task from an interrupted read can't mark the
     /// wrong read's schedule complete.
     @discardableResult
-    func reset(totalChunks: Int, onFinished: @escaping () -> Void) -> Int {
+    func reset(onFinished: @escaping () -> Void) -> Int {
         stop()
-        self.totalChunks = totalChunks
-        currentChunkIndex = 0
-        scheduledCount = 0
-        pendingBuffers = 0
-        isScheduleComplete = false
-        wordsByChunk = [:]
         onAllChunksFinished = onFinished
         return generation
     }
 
-    func enqueue(samples: [Float], words: [SpokenWord], sampleRate: Double) throws {
+    func enqueue(samples: [Float], sampleRate: Double) throws {
         // A chunk that synthesizes to zero frames (e.g. punctuation-only
         // text) would otherwise force-unwrap a nil baseAddress below.
         guard !samples.isEmpty else { return }
@@ -95,18 +75,12 @@ final class AudioPlayer: ObservableObject {
 
         scheduledCount += 1
         pendingBuffers += 1
-        let chunkNumber = scheduledCount
         let scheduledGeneration = generation
-        wordsByChunk[chunkNumber] = words
 
         playerNode.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
             Task { @MainActor in
                 guard let self, self.generation == scheduledGeneration else { return }
-                self.currentChunkIndex = chunkNumber
                 self.pendingBuffers -= 1
-                // This buffer just finished, so — with buffers scheduled
-                // back-to-back — the next one is starting right now.
-                self.beginChunk(chunkNumber + 1)
                 self.checkFinished()
             }
         }
@@ -114,47 +88,6 @@ final class AudioPlayer: ObservableObject {
         if !playerNode.isPlaying {
             playerNode.play()
             isPlaying = true
-            beginChunk(chunkNumber)
-            startHighlightTimer()
-        }
-    }
-
-    private func beginChunk(_ number: Int) {
-        guard let words = wordsByChunk[number] else {
-            currentWords = []
-            activeWordIndex = nil
-            return
-        }
-        currentChunkStartDate = Date()
-        currentWords = words
-        activeWordIndex = nil
-    }
-
-    private func startHighlightTimer() {
-        guard highlightTimer == nil else { return }
-        highlightTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.updateActiveWord() }
-        }
-    }
-
-    private func stopHighlightTimer() {
-        highlightTimer?.invalidate()
-        highlightTimer = nil
-    }
-
-    private func updateActiveWord() {
-        guard let startDate = currentChunkStartDate else { return }
-        let elapsed = Date().timeIntervalSince(startDate)
-
-        if let index = currentWords.firstIndex(where: { word in
-            guard let start = word.startTime else { return false }
-            return elapsed >= start && elapsed < (word.endTime ?? start)
-        }) {
-            activeWordIndex = index
-        } else if let lastStarted = currentWords.lastIndex(where: { ($0.startTime ?? .infinity) <= elapsed }) {
-            // Between two words' precise ranges (e.g. mid-pause) — keep
-            // showing the most recent one rather than flickering to none.
-            activeWordIndex = lastStarted
         }
     }
 
@@ -179,7 +112,6 @@ final class AudioPlayer: ObservableObject {
     private func checkFinished() {
         guard isScheduleComplete, pendingBuffers == 0 else { return }
         isPlaying = false
-        stopHighlightTimer()
         // A running engine keeps the output device awake even with nothing
         // queued. The next read's enqueue() starts it again.
         playerNode.stop()
@@ -190,24 +122,12 @@ final class AudioPlayer: ObservableObject {
     func pause() {
         playerNode.pause()
         isPlaying = false
-        pauseDate = Date()
-        stopHighlightTimer()
     }
 
     func resume() {
         guard engine.isRunning else { return }
-        if let pauseDate {
-            // The wall-clock kept moving while paused, but playback
-            // didn't — shift the chunk's start time forward by exactly
-            // how long the pause lasted so elapsed-time math stays
-            // correct for word highlighting.
-            let pausedDuration = Date().timeIntervalSince(pauseDate)
-            currentChunkStartDate = currentChunkStartDate?.addingTimeInterval(pausedDuration)
-            self.pauseDate = nil
-        }
         playerNode.play()
         isPlaying = true
-        startHighlightTimer()
     }
 
     func stop() {
@@ -218,10 +138,5 @@ final class AudioPlayer: ObservableObject {
         scheduledCount = 0
         pendingBuffers = 0
         isScheduleComplete = false
-        currentWords = []
-        activeWordIndex = nil
-        currentChunkStartDate = nil
-        pauseDate = nil
-        stopHighlightTimer()
     }
 }
