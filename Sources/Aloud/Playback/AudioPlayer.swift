@@ -87,6 +87,12 @@ final class AudioPlayer: ObservableObject {
             try engine.start()
         }
 
+        // The player already ran out of audio before this chunk was ready,
+        // so the listener heard a silent gap.
+        if scheduledCount > 0 && pendingBuffers == 0 {
+            NSLog("[Aloud][perf] playback gap before chunk \(scheduledCount + 1)")
+        }
+
         scheduledCount += 1
         pendingBuffers += 1
         let chunkNumber = scheduledCount

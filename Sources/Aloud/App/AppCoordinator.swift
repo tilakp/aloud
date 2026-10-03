@@ -54,6 +54,7 @@ final class AppCoordinator: ObservableObject {
     /// immediately (that alone has no focus side effects), but capture
     /// happens before anything else touches window/app activation.
     func readCurrentSelection() {
+        let pressedAt = ContinuousClock.now
         activityState = .active
         errorMessage = nil
         currentChunkText = ""
@@ -61,8 +62,9 @@ final class AppCoordinator: ObservableObject {
         Task {
             do {
                 let text = try await SelectionCapture.captureSelectedText()
+                NSLog("[Aloud][perf] capture took \(milliseconds(since: pressedAt)) ms")
                 popupRequestID += 1
-                startReading(text: text, voice: settings.selectedVoice, speed: Float(settings.speed))
+                startReading(text: text, voice: settings.selectedVoice, speed: Float(settings.speed), startedAt: pressedAt)
             } catch SelectionCapture.CaptureError.permissionDenied {
                 popupRequestID += 1
                 activityState = .idle
@@ -122,7 +124,13 @@ final class AppCoordinator: ObservableObject {
         currentChunkText = ""
     }
 
-    private func startReading(text: String, voice: String, speed: Float, isPreview: Bool = false) {
+    private func startReading(
+        text: String,
+        voice: String,
+        speed: Float,
+        isPreview: Bool = false,
+        startedAt: ContinuousClock.Instant = .now
+    ) {
         synthesisTask?.cancel()
         audioPlayer.stop()
 
@@ -154,25 +162,39 @@ final class AppCoordinator: ObservableObject {
         let chunksToRead = chunks
         synthesisTask = Task {
             do {
+                let loadStart = ContinuousClock.now
+                let wasLoaded = await KokoroEngine.shared.isLoaded
                 try await KokoroEngine.shared.load(
                     modelURL: ModelManager.shared.modelFileURL,
                     voicesURL: ModelManager.shared.voicesFileURL
                 )
+                if !wasLoaded {
+                    NSLog("[Aloud][perf] model load took \(milliseconds(since: loadStart)) ms")
+                }
             } catch {
                 errorMessage = "Couldn't load the voice model."
                 activityState = .idle
                 return
             }
 
-            for chunk in chunksToRead {
+            var hasStartedAudio = false
+            for (index, chunk) in chunksToRead.enumerated() {
                 if Task.isCancelled { return }
                 currentChunkText = chunk
                 do {
+                    let synthStart = ContinuousClock.now
                     let (samples, words) = try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
+                    let audioMilliseconds = Int(Double(samples.count) / KokoroEngine.sampleRate * 1000)
+                    NSLog("[Aloud][perf] chunk \(index + 1)/\(chunksToRead.count): \(chunk.count) chars, synth \(milliseconds(since: synthStart)) ms, audio \(audioMilliseconds) ms")
                     if Task.isCancelled { return }
                     try audioPlayer.enqueue(samples: samples, words: words, sampleRate: KokoroEngine.sampleRate)
+                    if !hasStartedAudio {
+                        hasStartedAudio = true
+                        NSLog("[Aloud][perf] first audio after \(milliseconds(since: startedAt)) ms")
+                    }
                 } catch {
                     // Skip a chunk that fails rather than aborting the whole read.
+                    NSLog("[Aloud][perf] chunk \(index + 1) skipped: \(error)")
                     continue
                 }
             }
@@ -186,4 +208,9 @@ final class AppCoordinator: ObservableObject {
             audioPlayer.finishSchedule(generation: generation)
         }
     }
+}
+
+private func milliseconds(since start: ContinuousClock.Instant) -> Int {
+    let elapsed = ContinuousClock.now - start
+    return Int(elapsed.components.seconds * 1000 + elapsed.components.attoseconds / 1_000_000_000_000_000)
 }
