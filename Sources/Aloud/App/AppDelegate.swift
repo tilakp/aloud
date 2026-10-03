@@ -10,7 +10,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItemController = StatusItemController(coordinator: coordinator)
 
         if coordinator.settings.hasCompletedOnboarding {
-            Task { await ModelManager.shared.ensureInstalled() }
+            Task {
+                await ModelManager.shared.ensureInstalled()
+                await coordinator.preloadEngine()
+            }
         } else {
             presentOnboarding()
         }

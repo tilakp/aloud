@@ -124,6 +124,25 @@ final class AppCoordinator: ObservableObject {
         currentChunkText = ""
     }
 
+    /// Loads the model and runs one short synthesis, so the first real read
+    /// after launch doesn't pay for the weight load and Metal shader
+    /// compilation. Uses the default voice so the G2P language is already
+    /// the one the next read will most likely need.
+    func preloadEngine() async {
+        guard ModelManager.shared.state == .installed else { return }
+        let start = ContinuousClock.now
+        do {
+            try await KokoroEngine.shared.load(
+                modelURL: ModelManager.shared.modelFileURL,
+                voicesURL: ModelManager.shared.voicesFileURL
+            )
+            _ = try await KokoroEngine.shared.synthesize(text: "Hello.", voice: settings.selectedVoice, speed: 1.0)
+            NSLog("[Aloud][perf] engine preload took \(milliseconds(since: start)) ms")
+        } catch {
+            NSLog("[Aloud][perf] engine preload failed: \(error.localizedDescription)")
+        }
+    }
+
     private func startReading(
         text: String,
         voice: String,

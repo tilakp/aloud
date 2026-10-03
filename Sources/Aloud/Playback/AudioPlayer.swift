@@ -180,6 +180,10 @@ final class AudioPlayer: ObservableObject {
         guard isScheduleComplete, pendingBuffers == 0 else { return }
         isPlaying = false
         stopHighlightTimer()
+        // A running engine keeps the output device awake even with nothing
+        // queued. The next read's enqueue() starts it again.
+        playerNode.stop()
+        engine.stop()
         onAllChunksFinished?()
     }
 

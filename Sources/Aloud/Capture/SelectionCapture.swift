@@ -40,6 +40,10 @@ enum SelectionCapture {
 
     private static func readViaAccessibility() -> String? {
         let systemWide = AXUIElementCreateSystemWide()
+        // The default timeout is about 6s, so a hung frontmost app would
+        // make the hotkey look dead. On the system-wide element this sets
+        // the timeout for every AX call this process makes.
+        AXUIElementSetMessagingTimeout(systemWide, 1.0)
 
         var focusedElement: AnyObject?
         let focusResult = AXUIElementCopyAttributeValue(
@@ -69,13 +73,17 @@ enum SelectionCapture {
 
         simulateCopyKeystroke()
 
-        // Give the frontmost app a beat to respond to the synthetic ⌘C
-        // before reading the pasteboard back.
-        try await Task.sleep(nanoseconds: 300_000_000)
-
+        // Give the frontmost app up to 300ms to respond to the synthetic
+        // ⌘C, but read the pasteboard back as soon as the copied string is
+        // there. The change count alone isn't enough: an app can clear the
+        // pasteboard (bumping the count) a moment before it writes to it.
         var result: String?
-        if pasteboard.changeCount != previousChangeCount {
-            result = pasteboard.string(forType: .string)
+        for _ in 0..<20 {
+            if pasteboard.changeCount != previousChangeCount, let string = pasteboard.string(forType: .string) {
+                result = string
+                break
+            }
+            try await Task.sleep(for: .milliseconds(15))
         }
         NSLog("[Aloud][capture] clipboard changeCount before=\(previousChangeCount) after=\(pasteboard.changeCount) gotString=\(result != nil)")
 
