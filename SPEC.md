@@ -281,6 +281,12 @@ which gets annoying during development. Recommend signing with a stable
 identity (free Apple ID personal team is enough) so the Accessibility grant
 survives rebuilds.
 
+**Releases:** `.github/workflows/build.yml` builds the app and a `.dmg` on
+every push and pull request. To release, set `MARKETING_VERSION` in
+`project.yml`, add `.github/release-notes/vX.Y.Z.md`, then push the tag
+`vX.Y.Z`. CI checks that the tag matches the app version and creates the
+GitHub release with the DMG and those notes.
+
 ## 8. MVP scope
 
 **In scope (v1):**

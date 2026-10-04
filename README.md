@@ -30,10 +30,10 @@ There's no dock icon and no main window. There's a menu bar icon that pulses whi
 
 1. Download the latest `.dmg` from [Releases](../../releases/latest).
 2. Open the disk image and drag **Aloud** into **Applications**.
-3. **First launch:** Aloud isn't notarized by Apple (no paid developer account behind this), so Gatekeeper will block it the first time. Right-click (or Control-click) `Aloud.app` in Applications and choose **Open**, then confirm **Open** in the dialog that appears. You only need to do this once.
+3. **First launch:** Aloud isn't notarized by Apple (no paid developer account behind this), so macOS blocks it the first time. Open Aloud once and dismiss the warning. Then open **System Settings → Privacy & Security**, scroll down to the message about Aloud, click **Open Anyway**, and confirm. You only need to do this once.
 4. Aloud walks you through the rest on first launch: granting Accessibility access (needed to read your text selection from other apps). The voice model is built into the app, so there is nothing to download. The first launch takes about 10 seconds to prepare the voices.
 
-If step 3 doesn't work or you'd rather use the terminal:
+If you'd rather use the terminal for step 3:
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/Aloud.app

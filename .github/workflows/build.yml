@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      # The pre-build step downloads the voice model into Model/ (~100MB)
+      # and skips files that are already there with the right checksum.
+      - name: Cache voice model
+        uses: actions/cache@v4
+        with:
+          path: Model
+          key: voice-model-${{ hashFiles('scripts/model-files.tsv') }}
+
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build
+        run: |
+          xcodebuild -project Aloud.xcodeproj -scheme Aloud -configuration Release \
+            -derivedDataPath build -destination 'platform=macOS,arch=arm64' build
+
+      - name: Package
+        run: |
+          VERSION=$(defaults read "$PWD/build/Build/Products/Release/Aloud.app/Contents/Info.plist" CFBundleShortVersionString)
+          mkdir dmg
+          cp -R build/Build/Products/Release/Aloud.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname Aloud -srcfolder dmg -ov -format UDZO "Aloud-$VERSION.dmg"
+          echo "DMG=Aloud-$VERSION.dmg" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Aloud
+          path: ${{ env.DMG }}
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "error: tag $GITHUB_REF_NAME does not match the app version $VERSION"
+            exit 1
+          fi
+          NOTES=".github/release-notes/$GITHUB_REF_NAME.md"
+          if [ -f "$NOTES" ]; then
+            gh release create "$GITHUB_REF_NAME" "$DMG" --title "Aloud $VERSION" --notes-file "$NOTES"
+          else
+            gh release create "$GITHUB_REF_NAME" "$DMG" --title "Aloud $VERSION" --generate-notes
+          fi
