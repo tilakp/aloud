@@ -4,3 +4,7 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 .swiftpm/
+
+# Voice model, fetched at build time by scripts/fetch-model.py
+Model/*
+!Model/.gitkeep

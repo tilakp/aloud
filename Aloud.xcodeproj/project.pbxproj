@@ -15,7 +15,7 @@
 		4FCD51F4E466B6238B34FAFE /* StatusIconRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1A21D816965DFE3E9557B7 /* StatusIconRenderer.swift */; };
 		50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB636872AB6E1BEDBF02686 /* OnboardingView.swift */; };
 		61CBEB798406BD3C5B389576 /* OnboardingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46B2357CDDBA97225E18B2E9 /* OnboardingWindowController.swift */; };
-		884CBA8BAA0F3517A19B2CAF /* ModelManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD73116B3E9EC2F84BF902F /* ModelManifest.swift */; };
+		6F7C4F4E009B6350A337251B /* Model in Resources */ = {isa = PBXBuildFile; fileRef = 1411E89EA7D98F4AEEAF57BC /* Model */; };
 		8B4C12E0371D0CB731C5EE18 /* TextChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F1B0276E640FB0E1F432E1 /* TextChunker.swift */; };
 		9E4FED51681558E6F19B365D /* SelectionCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CE727915EB9A70D91C30FD3 /* SelectionCapture.swift */; };
 		9EB504D4AC89EE1114F36E20 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8697E1A947B9B131593233FC /* AppDelegate.swift */; };
@@ -32,6 +32,7 @@
 /* Begin PBXFileReference section */
 		08B6E85B2E215103006D87CC /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		0DAD333DD8D22C891FD82F20 /* Voices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Voices.swift; sourceTree = "<group>"; };
+		1411E89EA7D98F4AEEAF57BC /* Model */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Model; sourceTree = SOURCE_ROOT; };
 		32637DF61C065C877797B6B9 /* KokoroEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroEngine.swift; sourceTree = "<group>"; };
 		46B2357CDDBA97225E18B2E9 /* OnboardingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindowController.swift; sourceTree = "<group>"; };
 		46F1B0276E640FB0E1F432E1 /* TextChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextChunker.swift; sourceTree = "<group>"; };
@@ -49,7 +50,6 @@
 		DEA8E30A7C60C17EAF0C9124 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		F773EED1D54230017F1F9619 /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
 		F9F163B4C6A66048AA83B441 /* Aloud.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aloud.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FAD73116B3E9EC2F84BF902F /* ModelManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManifest.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,7 +119,6 @@
 			children = (
 				32637DF61C065C877797B6B9 /* KokoroEngine.swift */,
 				6022C2831C4E7FA07FE46896 /* ModelManager.swift */,
-				FAD73116B3E9EC2F84BF902F /* ModelManifest.swift */,
 				46F1B0276E640FB0E1F432E1 /* TextChunker.swift */,
 			);
 			path = Synthesis;
@@ -128,6 +127,7 @@
 		7D90FB11EAE67A72C3C4CD33 = {
 			isa = PBXGroup;
 			children = (
+				1411E89EA7D98F4AEEAF57BC /* Model */,
 				2BCA6E2A69BDABE1990FA4AC /* Sources */,
 				8E3BF1A0F07212AF07737B95 /* Products */,
 			);
@@ -186,6 +186,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 26E7B14190F650624A97E1BB /* Build configuration list for PBXNativeTarget "Aloud" */;
 			buildPhases = (
+				A4092EE4D30AEAD38A86DD05 /* Fetch voice model */,
 				EB57D8AD9BF86A1181EA5623 /* Sources */,
 				C6506615DEAC548E1E7AA506 /* Resources */,
 				F916B3A4C07F517AEDA128C3 /* Frameworks */,
@@ -247,10 +248,33 @@
 			buildActionMask = 2147483647;
 			files = (
 				44A2D2941AF76CAFA20B4DF6 /* Assets.xcassets in Resources */,
+				6F7C4F4E009B6350A337251B /* Model in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A4092EE4D30AEAD38A86DD05 /* Fetch voice model */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Fetch voice model";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/usr/bin/python3 \"$SRCROOT/scripts/fetch-model.py\"";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		EB57D8AD9BF86A1181EA5623 /* Sources */ = {
@@ -263,7 +287,6 @@
 				E2CED29616D71FC5F2503AB5 /* HotkeyManager.swift in Sources */,
 				317B5C842B1DCD5BD03209F9 /* KokoroEngine.swift in Sources */,
 				ED7C1CFD787A348D70C3A639 /* ModelManager.swift in Sources */,
-				884CBA8BAA0F3517A19B2CAF /* ModelManifest.swift in Sources */,
 				50BF53EE289996CFF723475F /* OnboardingView.swift in Sources */,
 				61CBEB798406BD3C5B389576 /* OnboardingWindowController.swift in Sources */,
 				D09FB55FF1895256DA07393C /* PermissionsManager.swift in Sources */,
@@ -409,6 +432,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = Sources/Aloud/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -432,6 +456,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = Sources/Aloud/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

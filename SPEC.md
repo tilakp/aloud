@@ -27,7 +27,7 @@ voice. Local-only, no cloud calls, no Python.
 | Global hotkey | [`sindresorhus/KeyboardShortcuts`](https://github.com/sindresorhus/KeyboardShortcuts) — MIT, 2.7k★, actively maintained, gives us the recorder UI for free |
 | Text selection capture | Accessibility API (`AXUIElement`), with simulated-copy as a silent fallback (see §5.2) |
 | Audio playback | `AVAudioEngine` + `AVAudioPlayerNode`, streaming buffers per chunk |
-| Model distribution | Downloaded on first launch by FluidAudio from Hugging Face into `~/.cache/fluidaudio/Models/`, not bundled in the app binary |
+| Model distribution | Bundled in the app (~100 MB), fetched at build time from a pinned Hugging Face commit and checksum-verified |
 
 **Platform floor:** macOS 15.0+, Apple Silicon only (Neural Engine) — confirmed
 acceptable. This machine (macOS 26.6, arm64) satisfies it.
@@ -165,22 +165,29 @@ let samples = try await manager.synthesizeDetailed(text: chunkText, voice: voice
   finish generating.
 
 ### 5.5 ModelManager
-Model assets are **not bundled** in the app. FluidAudio downloads and caches
-them in `~/.cache/fluidaudio/Models/`:
+The model (~100 MB) is **bundled in the app** as `Resources/Model`, so the
+app never downloads anything:
 
-- `KokoroAneResourceDownloader.ensureModels` fetches the CoreML stages (~90
-  MB) and reports progress to the onboarding screen.
-- `KokoroEngine.load()` then fetches the English G2P assets (~40 MB) and the
-  20 US voice packs, and loads everything.
-- On later launches the same calls find the cached files and only load them.
-- `ModelRegistry.revisionOverrides` pins the model chain to a fixed commit.
-  FluidAudio fetches the G2P assets and voice data from `main` regardless,
-  so after loading, every file is checked against the SHA-256 manifest in
-  `ModelManifest.swift` (~0.3 s, off the main actor, on every launch). A
-  mismatch unloads the engine, deletes the bad files and fails the install;
-  reads are refused until the model is installed and verified.
-  `scripts/model-manifest.py` regenerates the manifest after a revision,
-  voice list or FluidAudio version change.
+- **Build time:** `scripts/fetch-model.py` runs as a pre-build step. It
+  downloads each file listed in `scripts/model-files.tsv` from a fixed
+  commit of `FluidInference/kokoro-82m-coreml` on Hugging Face into the
+  git-ignored `Model/` folder, and fails the build if a SHA-256 differs.
+  English voices other than `af_heart` exist only as `voices/<name>.json`;
+  the script converts them to FluidAudio's flat fp32 `.bin` layout,
+  byte-exact with `KokoroAneVoicePack.load(fromJSON:)`. Only files English
+  synthesis reads are included (no Spanish, French or UK lexicons).
+  `fetch-model.py --repin <commit>` moves the list to a new commit, checking
+  each download against the Hugging Face tree first.
+- **Launch:** FluidAudio only reads models from `~/.cache/fluidaudio/Models/`.
+  `ModelManager` checks each cached file against `files.tsv` (~0.3 s, off the
+  main actor), copies any missing or changed file from the bundle (a clone on
+  APFS), and only then loads the engine. Reads are refused until this is done.
+- `ModelRegistry.baseURL` is set to an unresolvable host, so if FluidAudio
+  ever tried to download a missing file, it would fail instead of going
+  online.
+- The first load after install takes ~10 s while CoreML compiles the model
+  for the Neural Engine; later launches take ~1 s. Onboarding shows
+  "Preparing voices…" until it is ready.
 - After a successful install, the MLX files from v0.1.x in
   `~/Library/Application Support/Aloud/Models/` are deleted.
 
@@ -230,10 +237,10 @@ animating while the menu is open.
 ### 5.9 Onboarding (first launch only)
 Not an ongoing UI surface — a small transient window shown once before the
 menu bar item is fully functional, then never shown again (reachable later
-only by resetting the app). Three steps:
-1. Explain what Aloud does.
-2. Request Accessibility permission, deep-link to the System Settings pane.
-3. Download model files with progress bar, then play a sample sentence to
+only by resetting the app). Two steps:
+1. Explain what Aloud does and request Accessibility permission, with a
+   deep link to the System Settings pane.
+2. Once the voices are prepared, play a sample sentence to
    confirm the whole pipeline works end-to-end.
 
 After this window closes, everything else happens through the status item.
@@ -294,11 +301,13 @@ survives rebuilds.
 
 ## 9. Open risks
 
-- **Model source stability**: part of the download still comes from the
-  `main` branch of `FluidInference/kokoro-82m-coreml`. The checksum check
-  means a change there can't silently change what new installs use, but it
-  makes new installs fail until the manifest is updated and a new build
-  ships. Mirroring the files would remove that dependency.
+- **Build-time model source**: building from source needs the pinned commit
+  of `FluidInference/kokoro-82m-coreml` to stay on Hugging Face. Released
+  builds are unaffected (the model is inside them). If the repo is removed,
+  the files would need a mirror, e.g. this repo's release assets.
+- **FluidAudio upgrades**: a new FluidAudio version can rename model files
+  (as with the `_v2` stages) or change what it reads. Update the paths in
+  `scripts/model-files.tsv`, re-pin, and test offline from an empty cache.
 - **AX selection gaps**: apps that don't expose `kAXSelectedTextAttribute`
   need the copy-fallback path exercised and tested (Slack, VS Code/Electron
   apps, some PDF viewers are the likely trouble spots).

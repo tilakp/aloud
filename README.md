@@ -31,7 +31,7 @@ There's no dock icon and no main window. There's a menu bar icon that pulses whi
 1. Download the latest `.dmg` from [Releases](../../releases/latest).
 2. Open the disk image and drag **Aloud** into **Applications**.
 3. **First launch:** Aloud isn't notarized by Apple (no paid developer account behind this), so Gatekeeper will block it the first time. Right-click (or Control-click) `Aloud.app` in Applications and choose **Open**, then confirm **Open** in the dialog that appears. You only need to do this once.
-4. Aloud walks you through the rest on first launch: granting Accessibility access (needed to read your text selection from other apps) and downloading the voice model (~130MB, one-time).
+4. Aloud walks you through the rest on first launch: granting Accessibility access (needed to read your text selection from other apps). The voice model is built into the app, so there is nothing to download. The first launch takes about 10 seconds to prepare the voices.
 
 If step 3 doesn't work or you'd rather use the terminal:
 
@@ -57,7 +57,7 @@ Full design rationale and architecture notes are in [`SPEC.md`](SPEC.md).
 
 ## Privacy
 
-Nothing about what you select or hear ever leaves your Mac. The only network traffic Aloud makes is the one-time voice model download on first launch, from FluidAudio's [Kokoro CoreML repository](https://huggingface.co/FluidInference/kokoro-82m-coreml) on Hugging Face. The model is pinned to a fixed commit, and every downloaded file is checked against SHA-256 checksums built into the app before it is used. The files are cached in `~/.cache/fluidaudio`.
+Nothing about what you select or hear ever leaves your Mac. Aloud makes no network connections: the voice model is built into the app. At launch it is copied into `~/.cache/fluidaudio` (where FluidAudio reads models), and every file is checked against its SHA-256 checksum before it is used.
 
 ## Building from source
 
@@ -69,7 +69,7 @@ xcodegen generate
 open Aloud.xcodeproj
 ```
 
-Build and run from Xcode (⌘R). Swift Package Manager will resolve FluidAudio and the other dependencies on first build — this can take a few minutes.
+Build and run from Xcode (⌘R). Swift Package Manager will resolve FluidAudio and the other dependencies on first build — this can take a few minutes. The first build also downloads the voice model (~100MB) from FluidAudio's [Kokoro CoreML repository](https://huggingface.co/FluidInference/kokoro-82m-coreml) on Hugging Face into `Model/`, pinned to one commit and checked file by file against `scripts/model-files.tsv`. Later builds reuse it.
 
 ## Credits
 

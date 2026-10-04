@@ -2,8 +2,8 @@ import Foundation
 import FluidAudio
 
 /// Kokoro-82M via FluidAudio's CoreML port, which keeps most of the model on
-/// the Neural Engine. FluidAudio manages its own model files (downloaded
-/// from Hugging Face into ~/.cache/fluidaudio).
+/// the Neural Engine. ModelManager puts the bundled model files into
+/// FluidAudio's cache before calling `load()`.
 actor KokoroEngine {
     static let shared = KokoroEngine()
 
@@ -23,8 +23,7 @@ actor KokoroEngine {
         var errorDescription: String? { "The voice model isn't loaded." }
     }
 
-    /// Downloads anything missing, then loads the models. Every voice is
-    /// preloaded so that picking a different voice later works offline.
+    /// Loads the models and every voice pack from FluidAudio's cache.
     func load() async throws {
         if manager != nil { return }
         let task = loadTask ?? Task {
@@ -39,11 +38,6 @@ actor KokoroEngine {
             loadTask = nil
             throw error
         }
-    }
-
-    func unload() {
-        manager = nil
-        loadTask = nil
     }
 
     func synthesize(text: String, voice: String, speed: Float) async throws -> [Float] {

@@ -1,15 +1,18 @@
 import Foundation
+import CryptoKit
 import FluidAudio
 
+/// The voice model ships inside the app (Resources/Model, fetched and
+/// checksum-verified at build time by scripts/fetch-model.py). FluidAudio
+/// only reads models from its cache, so at launch the files are cloned there
+/// and checked before anything loads them. Nothing is ever downloaded.
 @MainActor
 final class ModelManager: ObservableObject {
     static let shared = ModelManager()
 
     enum State: Equatable {
         case notInstalled
-        case downloading(fraction: Double)
-        /// Downloaded; loading the models and fetching the small
-        /// pronunciation and voice files.
+        /// Copying the bundled model into place, checking it and loading it.
         case preparing
         case installed
         case failed(String)
@@ -20,41 +23,25 @@ final class ModelManager: ObservableObject {
     private var isEnsuring = false
 
     private init() {
-        // Pins the CoreML model chain. The manifest check in ensureInstalled
-        // covers the files FluidAudio still fetches from `main`.
-        ModelRegistry.revisionOverrides = [ModelManifest.repo: ModelManifest.revision]
+        // FluidAudio downloads any model file missing from its cache. Every
+        // file is put there from the bundle first, so a download would mean
+        // something is wrong: make it fail rather than quietly go online.
+        ModelRegistry.baseURL = "https://offline.invalid"
     }
 
-    /// Safe to call on every launch: FluidAudio skips files already in its
-    /// cache, so with everything present this only loads the models.
     func ensureInstalled() async {
         guard !isEnsuring, state != .installed else { return }
         isEnsuring = true
         defer { isEnsuring = false }
 
         do {
-            state = .downloading(fraction: 0)
-            try await KokoroAneResourceDownloader.ensureModels { [weak self] progress in
-                Task { @MainActor in
-                    guard let self, case .downloading = self.state else { return }
-                    self.state = .downloading(fraction: progress.fractionCompleted)
-                }
-            }
             state = .preparing
-            try await KokoroEngine.shared.load()
-            let verifyStart = ContinuousClock.now
-            let mismatched = try await Task.detached(priority: .utility) {
-                try ModelManifest.mismatchedFiles()
+            let installStart = ContinuousClock.now
+            try await Task.detached(priority: .userInitiated) {
+                try Self.installBundledModel()
             }.value
-            NSLog("[Aloud][perf] model checksum check took \(ContinuousClock.now - verifyStart)")
-            guard mismatched.isEmpty else {
-                // Never synthesize with files nobody reviewed. Deleting them
-                // lets Retry fetch them again.
-                await KokoroEngine.shared.unload()
-                NSLog("[Aloud] model files failed checksum: \(mismatched.map(\.lastPathComponent))")
-                mismatched.forEach { try? FileManager.default.removeItem(at: $0) }
-                throw ModelError.checksumMismatch
-            }
+            NSLog("[Aloud][perf] model install and checksum check took \(ContinuousClock.now - installStart)")
+            try await KokoroEngine.shared.load()
             removeLegacyModelFiles()
             state = .installed
         } catch {
@@ -62,11 +49,46 @@ final class ModelManager: ObservableObject {
         }
     }
 
+    /// Makes every cache file match the bundled one: files that are missing
+    /// or don't match their checksum are copied again from the bundle (a
+    /// clone on APFS, so no extra disk space). Reads ~100MB to check them,
+    /// so call it off the main actor.
+    nonisolated private static func installBundledModel() throws {
+        guard let bundled = Bundle.main.resourceURL?.appendingPathComponent("Model"),
+              let list = try? String(contentsOf: bundled.appendingPathComponent("files.tsv"), encoding: .utf8) else {
+            throw ModelError.bundleMissing
+        }
+        let cache = try TtsCacheDirectory.ensure().appendingPathComponent("Models")
+        let fileManager = FileManager.default
+
+        for line in list.split(separator: "\n") where !line.hasPrefix("#") {
+            let fields = line.split(separator: "\t")
+            guard fields.count == 2 else { continue }
+            let expected = String(fields[0])
+            let path = String(fields[1])
+            let destination = cache.appendingPathComponent(path)
+            if sha256(of: destination) == expected { continue }
+
+            try? fileManager.removeItem(at: destination)
+            try fileManager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try fileManager.copyItem(at: bundled.appendingPathComponent(path), to: destination)
+            guard sha256(of: destination) == expected else {
+                throw ModelError.checksumMismatch
+            }
+        }
+    }
+
+    nonisolated private static func sha256(of url: URL) -> String? {
+        guard let data = try? Data(contentsOf: url, options: .alwaysMapped) else { return nil }
+        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
     enum ModelError: LocalizedError {
+        case bundleMissing
         case checksumMismatch
 
         var errorDescription: String? {
-            "The downloaded voice files don't match the versions this build of Aloud expects. Try again, or update Aloud."
+            "Aloud's built-in voice model is missing or damaged. Reinstall Aloud."
         }
     }
 

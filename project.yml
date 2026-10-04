@@ -19,6 +19,15 @@ targets:
     platform: macOS
     sources:
       - path: Sources/Aloud
+      # The voice model, filled in by the pre-build script below and
+      # copied into the app as Resources/Model.
+      - path: Model
+        type: folder
+        buildPhase: resources
+    preBuildScripts:
+      - name: Fetch voice model
+        script: /usr/bin/python3 "$SRCROOT/scripts/fetch-model.py"
+        basedOnDependencyAnalysis: false
     dependencies:
       - package: FluidAudio
         product: FluidAudio
@@ -40,6 +49,9 @@ targets:
         MARKETING_VERSION: "0.1.8"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"
+        # The fetch script downloads into Model/, outside what a sandboxed
+        # build script may write.
+        ENABLE_USER_SCRIPT_SANDBOXING: false
         MACOSX_DEPLOYMENT_TARGET: "15.0"
         ENABLE_HARDENED_RUNTIME: true
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

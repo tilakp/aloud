@@ -49,7 +49,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         if let modelStatus = modelStatusTitle {
             menu.addItem(disabledItem(modelStatus))
             if case .failed = ModelManager.shared.state {
-                menu.addItem(item("Retry Download", action: #selector(retryDownload)))
+                menu.addItem(item("Retry", action: #selector(retryInstall)))
             }
             menu.addItem(.separator())
         }
@@ -89,11 +89,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private var modelStatusTitle: String? {
         switch ModelManager.shared.state {
         case .installed: nil
-        case .notInstalled: "Voice model not installed"
-        case .downloading(let fraction):
-            "Downloading voice model… \(fraction.formatted(.percent.precision(.fractionLength(0))))"
-        case .preparing: "Preparing voices…"
-        case .failed: "Voice model download failed"
+        case .notInstalled, .preparing: "Preparing voices…"
+        case .failed: "Voice model failed to load"
         }
     }
 
@@ -182,7 +179,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         PermissionsManager.openAccessibilitySettings()
     }
 
-    @objc private func retryDownload() {
+    @objc private func retryInstall() {
         Task {
             await ModelManager.shared.ensureInstalled()
             await coordinator.preloadEngine()

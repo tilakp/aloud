@@ -20,14 +20,13 @@ struct OnboardingView: View {
                     .frame(maxWidth: 280)
             }
 
-            Text("Step \(step + 1) of 3")
+            Text("Step \(step + 1) of 2")
                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .foregroundStyle(.tertiary)
 
             Group {
                 switch step {
                 case 0: accessibilityStep
-                case 1: downloadStep
                 default: testStep
                 }
             }
@@ -81,41 +80,6 @@ struct OnboardingView: View {
         }
     }
 
-    private var downloadStep: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "arrow.down.circle")
-                .font(.system(size: 40))
-                .foregroundStyle(Color.accentColor)
-
-            switch modelManager.state {
-            case .downloading(let fraction):
-                Text("Downloading voice model…").font(.system(size: 13))
-                ProgressView(value: fraction)
-                    .frame(maxWidth: 240)
-                Text(fraction.formatted(.percent.precision(.fractionLength(0))))
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            case .preparing:
-                Text("Preparing voices…").font(.system(size: 13))
-                ProgressView().frame(maxWidth: 240)
-            case .installed:
-                Label("Ready", systemImage: "checkmark.circle.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
-            case .failed(let message):
-                Text(message)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: 280)
-                Button("Retry") { Task { await modelManager.ensureInstalled() } }
-            case .notInstalled:
-                ProgressView().frame(maxWidth: 240)
-            }
-        }
-    }
-
     private var testStep: some View {
         VStack(spacing: 14) {
             Image(systemName: "play.circle")
@@ -126,28 +90,45 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: 280)
-            Button("Say something") {
-                AppCoordinator.shared.readText(
-                    "Hi, I'm Aloud. Select some text and press your hotkey to hear it."
-                )
+            switch modelManager.state {
+            case .installed:
+                Button("Say something") {
+                    AppCoordinator.shared.readText(
+                        "Hi, I'm Aloud. Select some text and press your hotkey to hear it."
+                    )
+                }
+            case .failed(let message):
+                Text(message)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 280)
+            case .notInstalled, .preparing:
+                // The first load compiles the model for the Neural Engine,
+                // which takes ~10s once.
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.small)
+                    Text("Preparing voices…").font(.system(size: 12))
+                }
+                .foregroundStyle(.secondary)
             }
         }
     }
 
     private var primaryButtonTitle: String {
-        step < 2 ? "Continue" : "Done"
+        step < 1 ? "Continue" : "Done"
     }
 
     private var primaryButtonDisabled: Bool {
         switch step {
         case 0: !accessibilityGranted
-        case 1: modelManager.state != .installed
         default: false
         }
     }
 
     private func advance() {
-        if step < 2 {
+        if step < 1 {
             step += 1
         } else {
             onFinish()
