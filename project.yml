@@ -38,8 +38,8 @@ targets:
       properties:
         CFBundleName: Aloud
         CFBundleDisplayName: Aloud
-        CFBundleShortVersionString: "0.1.7"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
         LSMinimumSystemVersion: "15.0"
         NSHumanReadableCopyright: ""
