@@ -122,6 +122,13 @@ final class AppCoordinator: ObservableObject {
         synthesisTask?.cancel()
         audioPlayer.stop()
 
+        // Only ModelManager loads the engine, once the model files have
+        // passed their checksum check.
+        guard ModelManager.shared.state == .installed else {
+            fail("The voice model isn't ready yet.")
+            return
+        }
+
         chunks = TextChunker.chunks(for: text)
         guard !chunks.isEmpty else {
             activityState = .idle
@@ -140,8 +147,7 @@ final class AppCoordinator: ObservableObject {
         // audio engine starts on it, so the two overlap instead of adding up.
         let firstChunkStart = ContinuousClock.now
         let firstChunk = Task.detached { [chunk = chunksToRead[0]] in
-            try await KokoroEngine.shared.load()
-            return try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
+            try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
         }
         do {
             try audioPlayer.startEngine(sampleRate: KokoroEngine.sampleRate)
@@ -151,19 +157,6 @@ final class AppCoordinator: ObservableObject {
         }
 
         synthesisTask = Task {
-            do {
-                let loadStart = ContinuousClock.now
-                let wasLoaded = await KokoroEngine.shared.isLoaded
-                try await KokoroEngine.shared.load()
-                if !wasLoaded {
-                    NSLog("[Aloud][perf] model load took \(milliseconds(since: loadStart)) ms")
-                }
-            } catch {
-                audioPlayer.stop()
-                fail("Couldn't load the voice model.")
-                return
-            }
-
             var hasStartedAudio = false
             for (index, chunk) in chunksToRead.enumerated() {
                 if Task.isCancelled { return }

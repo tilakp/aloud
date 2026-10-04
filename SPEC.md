@@ -173,6 +173,14 @@ them in `~/.cache/fluidaudio/Models/`:
 - `KokoroEngine.load()` then fetches the English G2P assets (~40 MB) and the
   20 US voice packs, and loads everything.
 - On later launches the same calls find the cached files and only load them.
+- `ModelRegistry.revisionOverrides` pins the model chain to a fixed commit.
+  FluidAudio fetches the G2P assets and voice data from `main` regardless,
+  so after loading, every file is checked against the SHA-256 manifest in
+  `ModelManifest.swift` (~0.3 s, off the main actor, on every launch). A
+  mismatch unloads the engine, deletes the bad files and fails the install;
+  reads are refused until the model is installed and verified.
+  `scripts/model-manifest.py` regenerates the manifest after a revision,
+  voice list or FluidAudio version change.
 - After a successful install, the MLX files from v0.1.x in
   `~/Library/Application Support/Aloud/Models/` are deleted.
 
@@ -286,9 +294,11 @@ survives rebuilds.
 
 ## 9. Open risks
 
-- **Model source stability**: FluidAudio downloads from the `main` branch of
-  `FluidInference/kokoro-82m-coreml` on Hugging Face, with no pinned
-  revision or checksum. A change there changes what new installs get.
+- **Model source stability**: part of the download still comes from the
+  `main` branch of `FluidInference/kokoro-82m-coreml`. The checksum check
+  means a change there can't silently change what new installs use, but it
+  makes new installs fail until the manifest is updated and a new build
+  ships. Mirroring the files would remove that dependency.
 - **AX selection gaps**: apps that don't expose `kAXSelectedTextAttribute`
   need the copy-fallback path exercised and tested (Slack, VS Code/Electron
   apps, some PDF viewers are the likely trouble spots).

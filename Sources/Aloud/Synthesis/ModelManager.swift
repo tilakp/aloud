@@ -19,7 +19,11 @@ final class ModelManager: ObservableObject {
 
     private var isEnsuring = false
 
-    private init() {}
+    private init() {
+        // Pins the CoreML model chain. The manifest check in ensureInstalled
+        // covers the files FluidAudio still fetches from `main`.
+        ModelRegistry.revisionOverrides = [ModelManifest.repo: ModelManifest.revision]
+    }
 
     /// Safe to call on every launch: FluidAudio skips files already in its
     /// cache, so with everything present this only loads the models.
@@ -38,10 +42,31 @@ final class ModelManager: ObservableObject {
             }
             state = .preparing
             try await KokoroEngine.shared.load()
+            let verifyStart = ContinuousClock.now
+            let mismatched = try await Task.detached(priority: .utility) {
+                try ModelManifest.mismatchedFiles()
+            }.value
+            NSLog("[Aloud][perf] model checksum check took \(ContinuousClock.now - verifyStart)")
+            guard mismatched.isEmpty else {
+                // Never synthesize with files nobody reviewed. Deleting them
+                // lets Retry fetch them again.
+                await KokoroEngine.shared.unload()
+                NSLog("[Aloud] model files failed checksum: \(mismatched.map(\.lastPathComponent))")
+                mismatched.forEach { try? FileManager.default.removeItem(at: $0) }
+                throw ModelError.checksumMismatch
+            }
             removeLegacyModelFiles()
             state = .installed
         } catch {
             state = .failed(error.localizedDescription)
+        }
+    }
+
+    enum ModelError: LocalizedError {
+        case checksumMismatch
+
+        var errorDescription: String? {
+            "The downloaded voice files don't match the versions this build of Aloud expects. Try again, or update Aloud."
         }
     }
 

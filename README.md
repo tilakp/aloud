@@ -57,7 +57,7 @@ Full design rationale and architecture notes are in [`SPEC.md`](SPEC.md).
 
 ## Privacy
 
-Nothing about what you select or hear ever leaves your Mac. The only network traffic Aloud makes is the one-time voice model download on first launch, from FluidAudio's [Kokoro CoreML repository](https://huggingface.co/FluidInference/kokoro-82m-coreml) on Hugging Face. The files are cached in `~/.cache/fluidaudio`.
+Nothing about what you select or hear ever leaves your Mac. The only network traffic Aloud makes is the one-time voice model download on first launch, from FluidAudio's [Kokoro CoreML repository](https://huggingface.co/FluidInference/kokoro-82m-coreml) on Hugging Face. The model is pinned to a fixed commit, and every downloaded file is checked against SHA-256 checksums built into the app before it is used. The files are cached in `~/.cache/fluidaudio`.
 
 ## Building from source
 

@@ -41,6 +41,11 @@ actor KokoroEngine {
         }
     }
 
+    func unload() {
+        manager = nil
+        loadTask = nil
+    }
+
     func synthesize(text: String, voice: String, speed: Float) async throws -> [Float] {
         guard let manager else { throw EngineError.notLoaded }
         return try await manager.synthesizeDetailed(text: text, voice: voice, speed: speed).samples
