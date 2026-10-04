@@ -136,6 +136,20 @@ final class AppCoordinator: ObservableObject {
         }
 
         let chunksToRead = chunks
+        // Synthesis of the first chunk runs off the main actor while the
+        // audio engine starts on it, so the two overlap instead of adding up.
+        let firstChunkStart = ContinuousClock.now
+        let firstChunk = Task.detached { [chunk = chunksToRead[0]] in
+            try await KokoroEngine.shared.load()
+            return try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
+        }
+        do {
+            try audioPlayer.startEngine(sampleRate: KokoroEngine.sampleRate)
+        } catch {
+            // enqueue() tries again with the first buffer.
+            NSLog("[Aloud][perf] audio engine start failed: \(error)")
+        }
+
         synthesisTask = Task {
             do {
                 let loadStart = ContinuousClock.now
@@ -145,6 +159,7 @@ final class AppCoordinator: ObservableObject {
                     NSLog("[Aloud][perf] model load took \(milliseconds(since: loadStart)) ms")
                 }
             } catch {
+                audioPlayer.stop()
                 fail("Couldn't load the voice model.")
                 return
             }
@@ -153,8 +168,10 @@ final class AppCoordinator: ObservableObject {
             for (index, chunk) in chunksToRead.enumerated() {
                 if Task.isCancelled { return }
                 do {
-                    let synthStart = ContinuousClock.now
-                    let samples = try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
+                    let synthStart = index == 0 ? firstChunkStart : ContinuousClock.now
+                    let samples = index == 0
+                        ? try await firstChunk.value
+                        : try await KokoroEngine.shared.synthesize(text: chunk, voice: voice, speed: speed)
                     let audioMilliseconds = Int(Double(samples.count) / KokoroEngine.sampleRate * 1000)
                     NSLog("[Aloud][perf] chunk \(index + 1)/\(chunksToRead.count): \(chunk.count) chars, synth \(milliseconds(since: synthStart)) ms, audio \(audioMilliseconds) ms")
                     if Task.isCancelled { return }

@@ -46,13 +46,27 @@ final class AudioPlayer: ObservableObject {
         return generation
     }
 
+    /// Starts the output device. Takes ~200ms when the device has been idle
+    /// (on the first read, and again after about a minute without audio)
+    /// and ~10ms otherwise, so callers start it while the first chunk is
+    /// still synthesizing rather than waiting for `enqueue` to do it.
+    func startEngine(sampleRate: Double) throws {
+        guard !engine.isRunning else { return }
+        let format = self.format ?? AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        self.format = format
+        let startedAt = ContinuousClock.now
+        engine.connect(playerNode, to: engine.mainMixerNode, format: format)
+        try engine.start()
+        NSLog("[Aloud][perf] audio engine start took \(ContinuousClock.now - startedAt)")
+    }
+
     func enqueue(samples: [Float], sampleRate: Double) throws {
         // A chunk that synthesizes to zero frames (e.g. punctuation-only
         // text) would otherwise force-unwrap a nil baseAddress below.
         guard !samples.isEmpty else { return }
 
-        let format = self.format ?? AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
-        self.format = format
+        try startEngine(sampleRate: sampleRate)
+        guard let format else { return }
 
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)) else {
             throw PlayerError.bufferCreationFailed
@@ -60,11 +74,6 @@ final class AudioPlayer: ObservableObject {
         buffer.frameLength = buffer.frameCapacity
         samples.withUnsafeBufferPointer { source in
             buffer.floatChannelData![0].update(from: source.baseAddress!, count: source.count)
-        }
-
-        if !engine.isRunning {
-            engine.connect(playerNode, to: engine.mainMixerNode, format: format)
-            try engine.start()
         }
 
         // The player already ran out of audio before this chunk was ready,
